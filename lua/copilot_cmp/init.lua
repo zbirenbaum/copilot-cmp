@@ -6,12 +6,7 @@ local M = {}
 M.client_source_map = {}
 
 M.setup = function()
-  vim.cmd([[
-    augroup cmp_nvim_lsp
-      autocmd!
-      autocmd InsertEnter * lua require'cmp_nvim_lsp'._on_insert_enter()
-    augroup END
-  ]])
+   vim.api.nvim_create_autocmd({"InsertEnter"}, {callback=M._on_insert_enter})
 end
 ---Setup cmp-nvim-lsp source.
 local if_nil = function(val, default)
@@ -43,7 +38,6 @@ end
 ---Refresh sources on InsertEnter.
 M._on_insert_enter = function()
    local cmp = require('cmp')
-
    local allowed_clients = {}
    local function add_clients(tbl)
       for _, client in ipairs(tbl) do
