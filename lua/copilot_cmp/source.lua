@@ -78,7 +78,6 @@ local check_match = function (list)
    if vim.tbl_isempty(list) then return list end
    local linenr = vim.api.nvim_win_get_cursor(0)[1]
    local curline = vim.api.nvim_buf_get_lines(0, linenr - 1, linenr, false)[1]
-   --string.gsub(curline, '[}%])]', '')
    for index, completion in ipairs(list) do
       list[index] = string.find(completion.textEdit.newText, curline) and completion or nil
    end
@@ -88,57 +87,63 @@ end
 local format_response = function (response)
    if not response or vim.tbl_isempty(response.completions) then return {} end
    local formatted_completions = {}
-   for _, completion in ipairs(response.completions) do
-      local formatted = {}
-      -- local cleaned = string.gsub(completion.text, '^%s*(.-)%s*$', '%1')
-      formatted.label = completion.text --> 10 and string.sub(completion.text, 1, 10) .. "..."
-      formatted.textEdit = {}
-      formatted.textEdit.newText = completion.text
-      formatted.textEdit.range = completion.range
-      formatted.textEdit.range["end"].line = formatted.textEdit.range["end"].line + 1
-      formatted.textEdit.range["start"].line = formatted.textEdit.range["start"].line + 1
-      formatted.documentation = {kind="markdown", value = "copilot completion: \n\n```lua\n" .. completion.text .. "\n```"}
+   for index, completion in ipairs(response.completions) do
+      local cleaned = string.gsub(completion.text, '^%s*(.-)%s*$', '%1')
+      local formatted = {
+         label = cleaned,
+         textEdit = {
+            newText = cleaned,
+            range = {
+               start = {
+                  line = completion.range.start.line+1,
+                  character = completion.range.start.character
+               },
+               ["end"] = {
+                  line = completion.range["end"].line+1,
+                  character = completion.range["end"].character
+               }
+            }
+         },
+         documentation = {kind="markdown", value = "copilot completion: \n\n```lua\n" .. completion.text .. "\n```"}
+      }
       table.insert(formatted_completions, formatted)
    end
    return formatted_completions
 end
 
 local merge_existing = function (list_a, list_b)
-   if not list_a then return {}, list_b end
+   if not list_a or vim.tbl_isempty(list_a) then
+      return list_b, list_b
+   end
    for index, completion in ipairs(list_a) do
       for index_b, new_completion in ipairs(list_b) do
-         if new_completion.textEdit.newText then
-            if completion.textEdit.newText == new_completion.textEdit.newText then
-               list_a[index] = new_completion
-               list_b[index_b] = nil
-            end
+         if completion.textEdit.newText == new_completion.textEdit.newText then
+            list_a[index] = new_completion
+            list_b[index_b] = nil
          end
       end
    end
    return list_a,list_b
 end
+
+
 source.complete = function(_, _, callback)
-   local get_completions = function(params)
-      vim.lsp.buf_request(0, 'getCompletions', params, function(_, response)
-         local linenr = vim.api.nvim_win_get_cursor(0)[1]
-         local formatted_completions = format_response(response)
-         if not existing_matches[linenr] then
-            existing_matches[linenr] = {}
-         else
-            existing_matches[linenr] = check_match(existing_matches[linenr])
-            existing_matches[linenr], formatted_completions = merge_existing(existing_matches[linenr], formatted_completions)
-         end
-         if not formatted_completions or not formatted_completions ~= {} then
+   local handler = function(_, response)
+      local linenr = vim.api.nvim_win_get_cursor(0)[1]
+      local formatted_completions = format_response(response)
+      if not existing_matches[linenr] then
+         existing_matches[linenr] = {}
+         if formatted_completions and formatted_completions ~= {} then
             existing_matches[linenr] = vim.tbl_deep_extend("force", existing_matches[linenr], formatted_completions)
          end
-         local final = {}
-         for index, completion in ipairs(existing_matches[linenr]) do
-            final[index] = completion
-            final[index].textEdit.newText = string.gsub(completion.textEdit.newText, '^%s*(.-)%s*$', '%1')
-            final[index].label = string.gsub(completion.label, '^%s*(.-)%s*$', '%1')
-         end
-         callback(final)
-      end)
+      else
+         existing_matches[linenr] = check_match(existing_matches[linenr])
+         existing_matches[linenr] = merge_existing(existing_matches[linenr], formatted_completions)
+      end
+      callback(existing_matches[linenr])
+   end
+   local get_completions = function(params)
+      vim.lsp.buf_request(0, 'getCompletions', params, handler)
    end
    local params = util.get_completion_params()
    get_completions(params)
