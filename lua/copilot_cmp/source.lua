@@ -22,7 +22,7 @@ end
 
 
 source.get_debug_name = function(self)
-   return table.concat('copilot')
+   return 'copilot'
 end
 
 source.get_trigger_characters = function(self)
@@ -73,21 +73,31 @@ source.execute = function(self, completion_item, callback)
    end)
 end
 
--- source.complete = function(self, request, callback)
---    local params = vim.lsp.util.make_position_params(0, self.client.offset_encoding)
--- end
+local format_response = function (response)
+   if not response or vim.tbl_isempty(response.completions) then return response end
+   local completion = response.completions[1]
+   local formatted = {}
+   formatted.label = string.gsub(completion.text, '^%s*(.-)%s*$', '%1')
+   formatted.textEdit = {}
+   formatted.textEdit.newText = string.gsub(completion.text, '^%s*(.-)%s*$', '%1')
+   formatted.textEdit.range = completion.range
+   formatted.textEdit.range["end"].line = formatted.textEdit.range["end"].line + 1
+   formatted.textEdit.range["start"].line = formatted.textEdit.range["start"].line + 1
+   return formatted
+end
 
 source.complete = function(self, request, callback)
-   local get_completions = function()
-      local params = util.get_completion_params()
-      completions = vim.lsp.buf_request(0, 'getCompletions', params, completion_handler)
+   local get_completions = function(params)
+      vim.lsp.buf_request(0, 'getCompletions', params, function(_, response)
+         local formatted = format_response(response)
+         callback({formatted})
+      end)
    end
-   print(request)
    local params = util.get_completion_params()
-   self:_request('getCompletions', params, function(_, response)
-      callback(table.concat(response), '')
-   end)
+   get_completions(params)
 end
+
+   -- self:_request('getCompletions', params, end
 
 source._get = function(_, root, paths)
    local c = root
