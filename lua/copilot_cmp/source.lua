@@ -9,7 +9,7 @@ source.new = function(client)
 end
 
 local function find_copilot()
-   clients = vim.tbl_deep_extend(
+   local clients = vim.tbl_deep_extend(
    vim.lsp.buf_get_clients(vim.api.nvim_get_current_buf()),
    vim.lsp.get_active_clients()
    )
@@ -96,8 +96,6 @@ source.complete = function(self, request, callback)
    local params = util.get_completion_params()
    get_completions(params)
 end
-
-   -- self:_request('getCompletions', params, end
 
 source._get = function(_, root, paths)
    local c = root
