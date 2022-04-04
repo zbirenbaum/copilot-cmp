@@ -106,7 +106,7 @@ local format_response = function (response)
                }
             }
          },
-         documentation = {kind="markdown", value = "copilot completion: \n\n```lua\n" .. completion.text .. "\n```"}
+         documentation = {kind="markdown", value = "```lua\n" .. completion.text .. "\n```"}
       }
       table.insert(formatted_completions, formatted)
    end
