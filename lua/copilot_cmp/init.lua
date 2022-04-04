@@ -6,7 +6,7 @@ local M = {}
 M.client_source_map = {}
 
 M.setup = function()
-   if vim.fn.has('nvim-0.7') then
+   if vim.fn.has('nvim-0.7') > 0 then
       vim.api.nvim_create_autocmd({"InsertEnter"}, {callback=M._on_insert_enter})
    else
       vim.api.nvim_command[[autocmd InsertEnter * lua require('copilot_cmp')._on_insert_enter()]]
