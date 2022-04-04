@@ -35,32 +35,8 @@ M.update_capabilities = function(capabilities, override)
    return capabilities
 end
 
----Refresh sources on InsertEnter.
--- M._on_insert_enter = function()
---    local cmp = require('cmp')
---    local allowed_clients = {}
---    local function add_clients(tbl)
---       for _, client in ipairs(tbl) do
---          if client.name == "copilot" and not M.client_source_map[client.id] then
---             local s = source.new(client)
---             if s:is_available() then
---                M.client_source_map[client.id] = cmp.register_source('copilot', s)
---             end
---          end
---       end
---    end
---    add_clients(vim.lsp.get_active_clients())
---    add_clients(vim.lsp.buf_get_clients())
---    -- -- unregister stopped/detached clients.
---    -- for client_id, source_id in pairs(M.client_source_map) do
---    --    cmp.unregister_source(source_id)
---    --    M.client_source_map[client_id] = nil
---    -- end
--- end
-
 M._on_insert_enter = function()
   local cmp = require('cmp')
-
   local allowed_clients = {}
 
   -- register all active clients.

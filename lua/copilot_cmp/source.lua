@@ -78,8 +78,9 @@ local check_match = function (list)
    if vim.tbl_isempty(list) then return list end
    local linenr = vim.api.nvim_win_get_cursor(0)[1]
    local curline = vim.api.nvim_buf_get_lines(0, linenr - 1, linenr, false)[1]
+   if curline == "" then list = {} return list end
    for index, completion in ipairs(list) do
-      list[index] = string.find(completion.textEdit.newText, curline) and completion or nil
+      list[index] = string.find(string.gsub(completion.textEdit.newText, '%[%]', ''), string.gsub(curline, '%[%]', '')) and completion or nil
    end
    return list
 end
@@ -87,10 +88,11 @@ end
 local format_response = function (response)
    if not response or vim.tbl_isempty(response.completions) then return {} end
    local formatted_completions = {}
-   for index, completion in ipairs(response.completions) do
+   for _ , completion in ipairs(response.completions) do
       local cleaned = string.gsub(completion.text, '^%s*(.-)%s*$', '%1')
       local formatted = {
          label = cleaned,
+         kind = 15,
          textEdit = {
             newText = cleaned,
             range = {
