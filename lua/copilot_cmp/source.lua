@@ -145,7 +145,7 @@ source.complete = function(_, _, callback)
       callback(existing_matches[linenr])
    end
    local get_completions = function(params)
-      vim.lsp.buf_request(0, 'getCompletions', params, handler)
+      vim.lsp.buf_request(0, 'getCyclingCompletions', params, handler)
    end
    local params = util.get_completion_params()
    get_completions(params)
