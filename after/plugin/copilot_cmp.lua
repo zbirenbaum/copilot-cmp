@@ -1,1 +1,1 @@
-require('copilot_cmp').setup()
+require("copilot_cmp").setup()
