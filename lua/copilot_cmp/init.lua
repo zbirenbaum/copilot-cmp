@@ -4,6 +4,7 @@ local M = {}
 
 ---Registered client and source mapping.
 M.client_source_map = {}
+M.registered = false
 
 M.setup = function()
    if vim.fn.has('nvim-0.7') > 0 then
@@ -39,37 +40,21 @@ M.update_capabilities = function(capabilities, override)
    return capabilities
 end
 
+local find_buf_client = function ()
+  for _, client in ipairs(vim.lsp.get_active_clients()) do
+    if client.name == "copilot" then
+      return client
+    end
+  end
+end
+
 M._on_insert_enter = function()
   local cmp = require('cmp')
-  local allowed_clients = {}
-
-  -- register all active clients.
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
-    allowed_clients[client.id] = client
-    if not M.client_source_map[client.id] then
-      local s = source.new(client)
-      if s:is_available() then
-        M.client_source_map[client.id] = cmp.register_source('copilot', s)
-      end
-    end
-  end
-
-  -- register all buffer clients (early register before activation)
-  for _, client in ipairs(vim.lsp.buf_get_clients(0)) do
-    allowed_clients[client.id] = client
-    if not M.client_source_map[client.id] then
-      local s = source.new(client)
-      if s:is_available() then
-        M.client_source_map[client.id] = cmp.register_source('copilot', s)
-      end
-    end
-  end
-
-  -- unregister stopped/detached clients.
-  for client_id, source_id in pairs(M.client_source_map) do
-    if not allowed_clients[client_id] or allowed_clients[client_id]:is_stopped() then
-      cmp.unregister_source(source_id)
-      M.client_source_map[client_id] = nil
+  local copilot = find_buf_client()
+  if copilot and not M.client_source_map[copilot.id] then
+    local s = source.new(copilot)
+    if s:is_available() then
+      M.client_source_map[copilot.id] = cmp.register_source('copilot', s)
     end
   end
 end
