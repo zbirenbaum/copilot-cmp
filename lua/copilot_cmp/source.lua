@@ -26,7 +26,7 @@ source.get_debug_name = function(self)
 end
 
 source.get_trigger_characters = function(self)
-  return self:_get(self.client.server_capabilities, { "completionProvider", "triggerCharacters" }) or {}
+  return { ' ', '.' }
 end
 
 source.is_available = function(self)
@@ -168,12 +168,10 @@ source.complete = function(_, _, callback)
       existing_matches[linenr] = vim.tbl_deep_extend("force", existing_matches[linenr], formatted_completions)
     end
     existing_matches[linenr] = check_match(existing_matches[linenr])
-    --    existing_matches[linenr] = merge_existing(existing_matches[linenr], formatted_completions)
-    -- end
     callback(existing_matches[linenr])
-    -- callback(existing_matches[linenr])
   end
   local get_completions = function(params)
+    -- vim.lsp.buf_request(0, "getCompletions", params, handler)
     vim.lsp.buf_request(0, "getCompletionsCycling", params, handler)
   end
   local params = util.get_completion_params()
