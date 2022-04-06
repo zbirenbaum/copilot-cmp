@@ -26,7 +26,7 @@ source.get_debug_name = function(self)
 end
 
 source.get_trigger_characters = function(self)
-  return { ' ', '.' }
+  return { " ", "." }
 end
 
 source.is_available = function(self)
@@ -42,37 +42,6 @@ source.is_available = function(self)
     return false
   end
   return true
-end
-
-source.resolve = function(self, completion_item, callback)
-  if self.client.is_stopped() then
-    return callback()
-  end
-
-  -- client has no completion capability.
-  if not self:_get(self.client.server_capabilities, { "completionProvider", "resolveProvider" }) then
-    return callback()
-  end
-
-  self:_request("completionItem/resolve", completion_item, function(_, response)
-    callback(response or completion_item)
-  end)
-end
-
-source.execute = function(self, completion_item, callback)
-  -- client is stopped.
-  if self.client.is_stopped() then
-    return callback()
-  end
-
-  -- completion_item has no command.
-  if not completion_item.command then
-    return callback()
-  end
-
-  self:_request("workspace/executeCommand", completion_item.command, function(_, _)
-    callback()
-  end)
 end
 
 local check_match = function(list)
@@ -140,21 +109,6 @@ local format_response = function(response)
     return {}
   end
   return filter_duplicates(response)
-end
-
-local merge_existing = function(list_a, list_b)
-  if not list_a or vim.tbl_isempty(list_a) then
-    return list_b, list_b
-  end
-  for index, completion in ipairs(list_a) do
-    for index_b, new_completion in ipairs(list_b) do
-      if completion.textEdit.newText == new_completion.textEdit.newText then
-        list_a[index] = new_completion
-        list_b[index_b] = nil
-      end
-    end
-  end
-  return list_a, list_b
 end
 
 source.complete = function(_, _, callback)
