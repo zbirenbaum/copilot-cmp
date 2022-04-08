@@ -26,7 +26,7 @@ source.get_debug_name = function(self)
 end
 
 source.get_trigger_characters = function(self)
-  return { " ", "." }
+  return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
 end
 
 source.is_available = function(self)
@@ -44,92 +44,48 @@ source.is_available = function(self)
   return true
 end
 
-local check_match = function(list)
-  if vim.tbl_isempty(list) then
-    return list
+source.deindent = function(_, text)
+  local indent = string.match(text, '^%s*')
+  if not indent then
+    return text
   end
-  local linenr = vim.api.nvim_win_get_cursor(0)[1]
-  local curline = vim.api.nvim_buf_get_lines(0, linenr - 1, linenr, false)[1]
-  if curline == "" then
-    list = {}
-    return list
-  end
-  for index, completion in ipairs(list) do
-    list[index] = string.find(string.gsub(completion.textEdit.newText, "%[%]", ""), string.gsub(curline, "%[%]", ""))
-        and completion
-      or nil
-  end
-  return list
+  return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
 end
 
-local function format_completions(completions)
-  local formatted = {}
-  for _, completion in ipairs(completions) do
-    local cleaned = string.gsub(completion.text, "^%s*(.-)%s*$", "%1")
-    table.insert(formatted, {
-      label = cleaned,
-      kind = 15,
-      textEdit = {
-        newText = cleaned,
-        range = {
-          start = {
-            line = completion.range.start.line + 1,
-            character = completion.range.start.character,
+source.format_completions = function(self, params, completions)
+  local formatted = {
+    items = vim.tbl_map(function(item)
+      item = vim.tbl_extend('force', {}, item)
+      local cleaned = self:deindent(item.text)
+      return {
+        label = cleaned,
+        kind = 15,
+        textEdit = {
+          range = {
+            start = item.range.start,
+            ['end'] = params.context.cursor,
           },
-          ["end"] = {
-            line = completion.range["end"].line + 1,
-            character = completion.range["end"].character,
-          },
+          newText = cleaned,
         },
-      },
-      documentation = { kind = "markdown", value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```" },
-    })
-  end
+        documentation = {
+          kind = "markdown",
+          value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
+        },
+      }
+    end, completions)
+  }
   return formatted
 end
 
-local function filter_duplicates(response)
-  local seen = {}
-  local comp = {}
-  for _, v in ipairs(response.completions) do
-    local key = string.gsub(v.text, "%s+", "")
-    if not seen[key] then
-      seen[key] = true
-      table.insert(comp, {
-        text = string.gsub(v.text, "^%s*(.-)%s*$", "%1"),
-        range = v.range,
-      })
-    end
-  end
-  return not vim.tbl_isempty(comp) and format_completions(comp)
-end
-
-local format_response = function(response)
-  if not response or vim.tbl_isempty(response.completions) then
-    return {}
-  end
-  return filter_duplicates(response)
-end
-
-source.complete = function(_, _, callback)
+source.complete = function(self, params, callback)
   local handler = function(_, response)
-    local linenr = vim.api.nvim_win_get_cursor(0)[1]
-    local formatted_completions = format_response(response)
-    if not existing_matches[linenr] then
-      existing_matches[linenr] = {}
+    local formatted = {}
+    if response and not vim.tbl_isempty(response.completions) then
+      formatted = self:format_completions(params, response.completions)
     end
-    if formatted_completions and formatted_completions.completions ~= {} then
-      existing_matches[linenr] = vim.tbl_deep_extend("force", existing_matches[linenr], formatted_completions)
-    end
-    existing_matches[linenr] = check_match(existing_matches[linenr])
-    callback(existing_matches[linenr])
+    callback(formatted)
   end
-  local get_completions = function(params)
-    -- vim.lsp.buf_request(0, "getCompletions", params, handler)
-    vim.lsp.buf_request(0, "getCompletionsCycling", params, handler)
-  end
-  local params = util.get_completion_params()
-  get_completions(params)
+  vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), handler)
 end
 
 source._get = function(_, root, paths)
