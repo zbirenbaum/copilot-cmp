@@ -3,26 +3,10 @@ local util = require("copilot.util")
 local existing_matches = {}
 
 source.new = function(client)
-  local self = setmetatable({}, { __index = source })
+  local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
   self.client = client
   self.request_ids = {}
   return self
-end
-
-local function find_copilot()
-  local clients = vim.tbl_deep_extend(
-    vim.lsp.buf_get_clients(vim.api.nvim_get_current_buf()),
-    vim.lsp.get_active_clients()
-  )
-  for client in ipairs(clients) do
-    if client.name == "copilot" then
-      return client
-    end
-  end
-end
-
-source.get_debug_name = function(self)
-  return "copilot"
 end
 
 source.get_trigger_characters = function(self)
@@ -54,6 +38,7 @@ end
 
 source.format_completions = function(self, params, completions)
   local formatted = {
+    IsIncomplete = true,
     items = vim.tbl_map(function(item)
       item = vim.tbl_extend('force', {}, item)
       local cleaned = self:deindent(item.text)
@@ -78,52 +63,20 @@ source.format_completions = function(self, params, completions)
 end
 
 source.complete = function(self, params, callback)
-  local handler = function(_, response)
-    local formatted = {}
+  existing_matches[params.context.bufnr] = existing_matches[params.context.bufnr] or {}
+  existing_matches[params.context.bufnr][params.context.cursor.row] = existing_matches[params.context.bufnr][params.context.cursor.row] or { IsIncomplete = true }
+  local existing = existing_matches[params.context.bufnr][params.context.cursor.row]
+  local has_complete = false
+  vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
     if response and not vim.tbl_isempty(response.completions) then
-      formatted = self:format_completions(params, response.completions)
+      existing = vim.tbl_deep_extend("force", existing, self:format_completions(params, response.completions))
+      has_complete = true
     end
-    callback(formatted)
-  end
-  vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), handler)
-end
-
-source._get = function(_, root, paths)
-  local c = root
-  for _, path in ipairs(paths) do
-    c = c[path]
-    if not c then
-      return nil
-    end
-  end
-  return c
-end
-
-source._request = function(self, method, params, callback)
-  if self.request_ids[method] ~= nil then
-    self.client.cancel_request(self.request_ids[method])
-    self.request_ids[method] = nil
-  end
-  local _, request_id
-  _, request_id = self.client.request(method, params, function(arg1, arg2, arg3)
-    if self.request_ids[method] ~= request_id then
-      return
-    end
-    self.request_ids[method] = nil
-
-    -- Text changed, retry
-    if arg1 and arg1.code == -32801 then
-      self:_request(method, params, callback)
-      return
-    end
-
-    if method == arg2 then
-      callback(arg1, arg3) -- old signature
-    else
-      callback(arg1, arg2) -- new signature
-    end
+    vim.schedule(function() callback(existing) end)
   end)
-  self.request_ids[method] = request_id
+  if not has_complete then
+    callback(existing)
+  end
 end
 
 return source
