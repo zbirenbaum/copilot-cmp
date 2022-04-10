@@ -50,7 +50,7 @@ source.format_completions = function(self, params, completions)
             start = item.range.start,
             ['end'] = params.context.cursor,
           },
-          newText = cleaned,
+          newText = item.text,
         },
         documentation = {
           kind = "markdown",
