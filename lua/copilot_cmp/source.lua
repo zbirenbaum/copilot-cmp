@@ -36,6 +36,14 @@ source.deindent = function(_, text)
   return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
 end
 
+source.deindent_insertion = function(_, text)
+  local indent = string.match(text, '^%s*')
+  if not indent then
+    return text
+  end
+  return string.gsub(text, '^' .. indent, '')
+end
+
 source.format_completions = function(self, params, completions)
   local formatted = {
     IsIncomplete = true,
@@ -50,7 +58,7 @@ source.format_completions = function(self, params, completions)
             start = item.range.start,
             ['end'] = params.context.cursor,
           },
-          newText = item.text,
+          newText = self:deindent_insertion(item.text)
         },
         documentation = {
           kind = "markdown",
