@@ -1,8 +1,7 @@
 local source = {}
 local util = require("copilot.util")
--- local print_buf = require("custom.utils.print_to_buf").new()
--- local print = print_buf.print
 local existing_matches = {}
+
 source.new = function(client)
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
   self.client = client
@@ -10,7 +9,7 @@ source.new = function(client)
   return self
 end
 
-source.get_trigger_characters = function(self)
+source.get_trigger_characters = function()
   return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
 end
 
@@ -48,9 +47,6 @@ end
 source.remove_entry_end = function(line, entry, index, thisline)
   local linefunc = get_last_i_chars
   local entryfunc = get_last_i_chars
-  print(index)
-  print(linefunc(line, index))
-  print(entryfunc(entry, index))
   if linefunc(line, index) == entryfunc(entry, index) and index <= string.len(line) and index <= string.len(entry) then
     return source.remove_entry_end(line, entry, index+1, thisline)
   elseif index >= 1 then
@@ -81,7 +77,7 @@ local deindent_insertion = function(text)
   return string.gsub(text, '^' .. indent, '')
 end
 
-source.get_range = function (item, params, offset)
+source.get_range = function (item, params)
   return {
     start = item.range.start,
     ['end'] = params.context.cursor,
@@ -91,8 +87,6 @@ end
 local format_and_clean_insertion = function(item, params)
   local deindented = deindent_insertion(item.text)
   deindented = source.clean_entry(deindented)
-  -- print(tostring(index))
-  -- print(string.sub(deindented, 1, (-1*index)+1))
   return {
     range = source.get_range(item, params),
     newText = deindented
