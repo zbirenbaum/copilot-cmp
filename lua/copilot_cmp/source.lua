@@ -2,6 +2,62 @@ local source = {}
 local util = require("copilot.util")
 local existing_matches = {}
 
+local get_line = function (line)
+  local line_text = vim.api.nvim_buf_get_lines(0, line, line+1, false)[1]
+  return line_text
+end
+
+local get_line_text = function (name)
+  local current_line = vim.api.nvim_win_get_cursor(0)[1]-1
+  return name == "current" and get_line(current_line) or get_line(current_line+1)
+end
+
+local function split_remove_trailing_newline(str)
+  local list = vim.fn.split(str, "\n")
+  if list[#list] == "" then
+    list[#list] = nil
+  end
+  return list
+end
+
+local get_text_after_cursor = function()
+  local current_line = vim.api.nvim_get_current_line()
+  return current_line:sub(vim.api.nvim_win_get_cursor(0)[2]+1)
+end
+
+local remove_string_from_end = function(str, str_to_remove)
+  if str:sub(-#str_to_remove) == str_to_remove then
+    return str:sub(1, -#str_to_remove - 1)
+  end
+  return str
+end
+
+local clean_insertion = function(text)
+  local indent = string.match(text, '^%s*')
+  if not indent then return text end
+  local list = split_remove_trailing_newline(string.gsub(text, '^' .. indent, ''))
+  list[1] = remove_string_from_end(list[1], get_text_after_cursor())
+  if #list > 1 then
+    list[#list] = remove_string_from_end(list[#list], get_line_text("next"))
+  end
+  return remove_string_from_end(table.concat(list, '\n'), '\n')
+end
+
+local get_range = function (item, params)
+  return {
+    start = item.range.start,
+    ['end'] = params.context.cursor,
+  }
+end
+
+source.format_and_clean_insertion = function(item, params)
+  local deindented = clean_insertion(item.text)
+  return {
+    range = get_range(item, params),
+    newText = deindented
+  }
+end
+
 source.new = function(client)
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
   self.client = client
@@ -28,7 +84,7 @@ source.is_available = function(self)
   return true
 end
 
-source.deindent = function(_, text)
+source.deindent = function(text)
   local indent = string.match(text, '^%s*')
   if not indent then
     return text
@@ -36,76 +92,16 @@ source.deindent = function(_, text)
   return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
 end
 
-local function get_last_i_chars(string, i)
-  if not string then return "" end
-  return string.sub(string, #string-i, #string)
-end
-
-local function get_first_i_chars(string, i)
-  if not string then return "" end
-  return string.sub(string, 1, i)
-end
-
-source.remove_entry_end = function(line, entry, index, thisline)
-  if not line or not entry then return entry end
-  local linefunc = get_last_i_chars
-  local entryfunc = get_last_i_chars
-  if linefunc(line, index) == entryfunc(entry, index) and index <= string.len(line) and index < string.len(entry) then
-    return source.remove_entry_end(line, entry, index+1, thisline)
-  elseif index >= 1 then
-    return get_first_i_chars(entry, #entry-index)
-  else
-    return entry
-  end
-end
-source.clean_entry = function (deindented)
-  local nextline = vim.api.nvim_win_get_cursor(0)[1]
-  deindented = string.gsub(deindented, '\n$', '')
-  local thisline = true
-  if string.find(deindented, "\n") then
-    thisline = false
-  end
-  local linenr = thisline and nextline - 1 or nextline
-  local line = vim.api.nvim_buf_get_lines(0, linenr, linenr+1, false)[1]
-  local cleaned = source.remove_entry_end(line, deindented, 0, thisline)
-  cleaned = string.gsub(cleaned, '\n$', '')
-  return cleaned
-end
-
-local deindent_insertion = function(text)
-  local indent = string.match(text, '^%s*')
-  if not indent then
-    return text
-  end
-  return string.gsub(text, '^' .. indent, '')
-end
-
-source.get_range = function (item, params)
-  return {
-    start = item.range.start,
-    ['end'] = params.context.cursor,
-  }
-end
-
-local format_and_clean_insertion = function(item, params)
-  local deindented = deindent_insertion(item.text)
-  deindented = source.clean_entry(deindented)
-  return {
-    range = source.get_range(item, params),
-    newText = deindented
-  }
-end
-
 source.format_completions = function(self, params, completions)
   local formatted = {
     IsIncomplete = true,
     items = vim.tbl_map(function(item)
       item = vim.tbl_extend('force', {}, item)
-      local cleaned = self:deindent(item.text)
+      local cleaned = source.deindent(item.text)
       return {
         label = cleaned,
         kind = 15,
-        textEdit = format_and_clean_insertion(item, params),
+        textEdit = source.format_and_clean_insertion(item, params),
         documentation = {
           kind = "markdown",
           value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
