@@ -37,17 +37,20 @@ source.deindent = function(_, text)
 end
 
 local function get_last_i_chars(string, i)
+  if not string then return "" end
   return string.sub(string, #string-i, #string)
 end
 
 local function get_first_i_chars(string, i)
+  if not string then return "" end
   return string.sub(string, 1, i)
 end
 
 source.remove_entry_end = function(line, entry, index, thisline)
+  if not line or not entry then return entry end
   local linefunc = get_last_i_chars
   local entryfunc = get_last_i_chars
-  if linefunc(line, index) == entryfunc(entry, index) and index <= string.len(line) and index <= string.len(entry) then
+  if linefunc(line, index) == entryfunc(entry, index) and index <= string.len(line) and index < string.len(entry) then
     return source.remove_entry_end(line, entry, index+1, thisline)
   elseif index >= 1 then
     return get_first_i_chars(entry, #entry-index)
