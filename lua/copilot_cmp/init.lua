@@ -1,12 +1,14 @@
 local source = require("copilot_cmp.source")
-
 local M = {}
 
 ---Registered client and source mapping.
 M.client_source_map = {}
 M.registered = false
 
-M.setup = function()
+M.setup = function(opts)
+  if opts and opts.custom_completion_function then
+    M.custom_completion_function = opts.custom_completion_function
+  end
   if vim.fn.has("nvim-0.7") > 0 then
     vim.api.nvim_create_autocmd({ "InsertEnter" }, { callback = M._on_insert_enter })
   else
@@ -53,8 +55,9 @@ end
 M._on_insert_enter = function()
   local cmp = require("cmp")
   local copilot = find_buf_client()
+  local opts = {client = copilot, custom_completion_function = M.custom_completion_function}
   if copilot and not M.client_source_map[copilot.id] then
-    local s = source.new(copilot)
+    local s = source.new(opts)
     if s:is_available() then
       M.client_source_map[copilot.id] = cmp.register_source("copilot", s)
     end

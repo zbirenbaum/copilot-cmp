@@ -50,6 +50,26 @@ local get_range = function (item, params)
   }
 end
 
+local format_completions = function(params, completions)
+  local formatted = {
+    IsIncomplete = true,
+    items = vim.tbl_map(function(item)
+      item = vim.tbl_extend('force', {}, item)
+      local cleaned = source.deindent(item.text)
+      return {
+        label = cleaned,
+        kind = 15,
+        textEdit = source.format_and_clean_insertion(item, params),
+        documentation = {
+          kind = "markdown",
+          value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
+        },
+      }
+    end, completions)
+  }
+  return formatted
+end
+
 source.format_and_clean_insertion = function(item, params)
   local deindented = clean_insertion(item.text)
   return {
@@ -58,12 +78,34 @@ source.format_and_clean_insertion = function(item, params)
   }
 end
 
-source.new = function(client)
+source.new = function(opts)
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
-  self.client = client
+  self.client = opts.client
+  print(opts.custom_completion_function)
+  source.completion_trigger_function = opts.custom_completion_function or self.defaults.completion_trigger_function
   self.request_ids = {}
+  print(vim.inspect(self))
   return self
 end
+
+source.defaults = {
+  completion_trigger_function = function(params, callback)
+    existing_matches[params.context.bufnr] = existing_matches[params.context.bufnr] or {}
+    existing_matches[params.context.bufnr][params.context.cursor.row] = existing_matches[params.context.bufnr][params.context.cursor.row] or { IsIncomplete = true }
+    local existing = existing_matches[params.context.bufnr][params.context.cursor.row]
+    local has_complete = false
+    vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
+      if response and not vim.tbl_isempty(response.completions) then
+        existing = vim.tbl_deep_extend("force", existing, format_completions(params, response.completions))
+        has_complete = true
+      end
+      vim.schedule(function() callback(existing) end)
+    end)
+    if not has_complete then
+      callback(existing)
+    end
+  end,
+}
 
 source.get_trigger_characters = function()
   return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
@@ -92,41 +134,8 @@ source.deindent = function(text)
   return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
 end
 
-source.format_completions = function(self, params, completions)
-  local formatted = {
-    IsIncomplete = true,
-    items = vim.tbl_map(function(item)
-      item = vim.tbl_extend('force', {}, item)
-      local cleaned = source.deindent(item.text)
-      return {
-        label = cleaned,
-        kind = 15,
-        textEdit = source.format_and_clean_insertion(item, params),
-        documentation = {
-          kind = "markdown",
-          value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
-        },
-      }
-    end, completions)
-  }
-  return formatted
-end
-
 source.complete = function(self, params, callback)
-  existing_matches[params.context.bufnr] = existing_matches[params.context.bufnr] or {}
-  existing_matches[params.context.bufnr][params.context.cursor.row] = existing_matches[params.context.bufnr][params.context.cursor.row] or { IsIncomplete = true }
-  local existing = existing_matches[params.context.bufnr][params.context.cursor.row]
-  local has_complete = false
-  vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
-    if response and not vim.tbl_isempty(response.completions) then
-      existing = vim.tbl_deep_extend("force", existing, self:format_completions(params, response.completions))
-      has_complete = true
-    end
-    vim.schedule(function() callback(existing) end)
-  end)
-  if not has_complete then
-    callback(existing)
-  end
+  print(source.completion_trigger_function(params, callback))
 end
 
 return source
