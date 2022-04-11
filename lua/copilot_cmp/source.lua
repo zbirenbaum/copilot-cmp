@@ -7,9 +7,9 @@ local get_line = function (line)
   return line_text
 end
 
-local get_line_text = function (name)
-  local current_line = vim.api.nvim_win_get_cursor(0)[1]-1
-  return name == "current" and get_line(current_line) or get_line(current_line+1)
+local get_line_text = function ()
+  local next_line = vim.api.nvim_win_get_cursor(0)[1]
+  return get_line(next_line) or ""
 end
 
 local function split_remove_trailing_newline(str)
@@ -22,7 +22,8 @@ end
 
 local get_text_after_cursor = function()
   local current_line = vim.api.nvim_get_current_line()
-  return current_line:sub(vim.api.nvim_win_get_cursor(0)[2]+1)
+  current_line = current_line:sub(vim.api.nvim_win_get_cursor(0)[2]+1)
+  return current_line or ""
 end
 
 local remove_string_from_end = function(str, str_to_remove)
@@ -38,7 +39,7 @@ local clean_insertion = function(text)
   local list = split_remove_trailing_newline(string.gsub(text, '^' .. indent, ''))
   list[1] = remove_string_from_end(list[1], get_text_after_cursor())
   if #list > 1 then
-    list[#list] = remove_string_from_end(list[#list], get_line_text("next"))
+    list[#list] = remove_string_from_end(list[#list], get_line_text())
   end
   return remove_string_from_end(table.concat(list, '\n'), '\n')
 end
@@ -92,7 +93,7 @@ source.deindent = function(text)
   return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
 end
 
-source.format_completions = function(self, params, completions)
+source.format_completions = function(_, params, completions)
   local formatted = {
     IsIncomplete = true,
     items = vim.tbl_map(function(item)
