@@ -99,8 +99,10 @@ source.format_completions = function(_, params, completions)
     items = vim.tbl_map(function(item)
       item = vim.tbl_extend('force', {}, item)
       local cleaned = source.deindent(item.text)
+      local label = cleaned:gsub('\n', ' ')
+      label = label:len()<30 and label or label:sub(1,20).." ... "..label:sub(-10)
       return {
-        label = cleaned,
+        label = label,
         kind = 15,
         textEdit = source.format_and_clean_insertion(item, params),
         documentation = {
