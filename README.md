@@ -11,28 +11,31 @@ Copilot suggestions will automatically be loaded into your cmp menu as snippets 
 If you already have copilot.lua installed, you can install this plugin with packer as you would any other with the following code:
 
 ### Install
-```
+
+```lua
 use {
     "zbirenbaum/copilot-cmp",
-    after = {"copilot.lua", "nvim-cmp"},
+    after = { "copilot.lua", "nvim-cmp" },
 }
 ```
+
 If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/copilot.lua and follow the instructions there before installing this one
 
 ### Configuration
-To link cmp with this source, simply go into your cmp configuration file and include `{name = "copilot}` under your sources
+
+To link cmp with this source, simply go into your cmp configuration file and include `{ name = "copilot" }` under your sources
 
 Here is an example of what it should look like:
-```
+
+```lua
 cmp.setup {
   ...
   sources = {
-    { name = "copilot", group_index = 2},
-    { name = "nvim_lsp", group_index = 2},
-    { name = "path", group_index = 2},
+    { name = "copilot", group_index = 2 },
+    { name = "nvim_lsp", group_index = 2 },
+    { name = "path", group_index = 2 },
     { name = "luasnip", group_index = 2 },
   },
   ...
 }
 ```
-
