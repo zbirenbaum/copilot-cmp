@@ -15,9 +15,7 @@ M.setup = function()
 end
 ---Setup cmp-nvim-lsp source.
 local if_nil = function(val, default)
-  if val == nil then
-    return default
-  end
+  if val == nil then return default end
   return val
 end
 
@@ -44,9 +42,7 @@ end
 
 local find_buf_client = function()
   for _, client in ipairs(vim.lsp.get_active_clients()) do
-    if client.name == "copilot" then
-      return client
-    end
+    if client.name == "copilot" then return client end
   end
 end
 

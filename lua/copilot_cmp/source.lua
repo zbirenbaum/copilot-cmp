@@ -90,12 +90,12 @@ source.deindent = function(text)
   if not indent then
     return text
   end
-  return string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n')
+  return string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
 end
 
 source.format_completions = function(_, params, completions)
   local formatted = {
-    IsIncomplete = true,
+    isIncomplete = true,
     items = vim.tbl_map(function(item)
       item = vim.tbl_extend('force', {}, item)
       local cleaned = source.deindent(item.text)
