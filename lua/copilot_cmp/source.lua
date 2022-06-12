@@ -29,14 +29,13 @@ source.is_available = function(self)
   return true
 end
 
-source.complete = function(self, params, callback)
+source.complete = function(_, params, callback)
   existing_matches[params.context.bufnr] = existing_matches[params.context.bufnr] or {}
   existing_matches[params.context.bufnr][params.context.cursor.row] = existing_matches[params.context.bufnr][params.context.cursor.row] or { IsIncomplete = true }
   local existing = existing_matches[params.context.bufnr][params.context.cursor.row]
   local has_complete = false
   vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
     if response and not vim.tbl_isempty(response.completions) then
-      print(vim.inspect(response.completions))
       existing = vim.tbl_deep_extend("force", existing, formatter.format_completions(params, response.completions))
       has_complete = true
     end

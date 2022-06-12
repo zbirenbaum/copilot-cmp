@@ -29,7 +29,17 @@ local remove_string_from_end = function(str, str_to_remove)
   return str
 end
 
-local clean_insertion = function(text)
+local formatter = {}
+
+formatter.deindent = function(text)
+  local indent = string.match(text, '^%s*')
+  if not indent then
+    return text
+  end
+  return string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
+end
+
+formatter.clean_insertion = function(text)
   local indent = string.match(text, '^%s*')
   if not indent then return text end
   local list = split_remove_trailing_newline(string.gsub(text, '^' .. indent, ''))
@@ -40,47 +50,30 @@ local clean_insertion = function(text)
   return remove_string_from_end(table.concat(list, '\n'), '\n')
 end
 
-local get_range = function (item, params)
-  return {
-    start = item.range.start,
-    ['end'] = params.context.cursor,
-  }
-end
-
-local deindent = function(text)
-  local indent = string.match(text, '^%s*')
-  if not indent then
-    return text
-  end
-  return string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
-end
-
-local format_and_clean_insertion = function(item, params)
-  local deindented = clean_insertion(item.text)
-  return {
-    range = get_range(item, params),
-    newText = deindented
-  }
-end
-
-local formatter = {}
 
 formatter.format_item = function(params, item)
   item = vim.tbl_extend('force', {}, item)
   item.text = item.text or item.displayText
-  local cleaned = deindent(item.text)
+  local cleaned = formatter.deindent(item.text)
   local label = cleaned:gsub('\n', ' ')
   label = label:len()<30 and label or label:sub(1,20).." ... "..label:sub(-10)
   return {
     label = label,
     kind = 15,
-    textEdit = format_and_clean_insertion(item, params),
+    textEdit = {
+      newText = formatter.clean_insertion(item.text),
+      range = {
+        start = item.range.start,
+        ['end'] = params.context.cursor,
+      }
+    },
     documentation = {
       kind = "markdown",
       value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
     },
   }
 end
+
 formatter.format_completions = function(params, completions)
   local map_table = function ()
     local items = {}
