@@ -6,7 +6,8 @@ local M = {}
 M.client_source_map = {}
 M.registered = false
 
-M.setup = function()
+M.setup = function(completion_method)
+  source.complete = completion_method or source.complete
   if vim.fn.has("nvim-0.7") > 0 then
     vim.api.nvim_create_autocmd({ "InsertEnter" }, { callback = M._on_insert_enter })
   else
