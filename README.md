@@ -14,9 +14,9 @@ If you already have copilot.lua installed, you can install this plugin with pack
 
 ```lua
 use {
-    "zbirenbaum/copilot-cmp",
-    after = { "copilot.lua", "nvim-cmp" },
-}
+  "zbirenbaum/copilot-cmp",
+  module = "copilot_cmp",
+},
 ```
 
 If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/copilot.lua and follow the instructions there before installing this one
