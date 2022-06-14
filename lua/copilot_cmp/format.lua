@@ -51,20 +51,23 @@ formatter.clean_insertion = function(text)
 end
 
 
-formatter.format_item = function(params, item)
+formatter.format_item = function(item, cursor)
   item = vim.tbl_extend('force', {}, item)
   item.text = item.text or item.displayText
   local cleaned = formatter.deindent(item.text)
   local label = cleaned:gsub('\n', ' ')
   label = label:len()<30 and label or label:sub(1,20).." ... "..label:sub(-10)
   return {
+    copilot = true, -- for comparator, only availiable in panel, not cycling
+    kind_hl_group = "CmpItemKindCopilot",
+    score = item.score or nil,
     label = label,
     kind = 15,
     textEdit = {
-      newText = formatter.clean_insertion(item.text),
+      newText = formatter.clean_insertion(item.text), --handle for panelCompletions
       range = {
         start = item.range.start,
-        ['end'] = params.context.cursor,
+        ['end'] = cursor,
       }
     },
     documentation = {
@@ -74,19 +77,15 @@ formatter.format_item = function(params, item)
   }
 end
 
-formatter.format_completions = function(params, completions)
+formatter.format_completions = function(completions, cursor)
   local map_table = function ()
     local items = {}
     for _, item in ipairs(completions) do
-      table.insert(items, formatter.format_item(params, item))
+      table.insert(items, formatter.format_item(item, cursor))
     end
     return items
   end
-  local formatted = {
-    isIncomplete = true,
-    items = map_table()
-  }
-  return formatted
+  return map_table()
 end
 
 return formatter
