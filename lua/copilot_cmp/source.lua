@@ -1,4 +1,8 @@
 local source = {}
+
+function source:get_keyword_pattern()
+  return "\\w\\+.*"
+end
 source.get_trigger_characters = function()
   return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
 end

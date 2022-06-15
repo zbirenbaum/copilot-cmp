@@ -1,3 +1,6 @@
+local types = require('cmp.types')
+local str_cmp = require('cmp.utils.str')
+
 local get_line = function (line)
   local line_text = vim.api.nvim_buf_get_lines(0, line, line+1, false)[1]
   return line_text
@@ -51,35 +54,37 @@ formatter.clean_insertion = function(text)
 end
 
 
+local remove_string = function(str1, str2)
+  local loc = str1:find("^%"..str2)
+  return loc and str1:sub(loc,"") or str1
+end
+local trim = function (str)
+  return str:gsub("%s*", "")
+end
+
 formatter.format_item = function(item, params)
+  local ctx=params.context
   item = vim.tbl_extend('force', {}, item)
   item.text = item.text or item.displayText
-  -- print(vim.inspect(params))
   local cleaned = formatter.deindent(item.text)
-  local prefix = params.context.cursor_before_line:sub(0, params.offset)
-  local label_prefix = prefix:gsub("^%s*", "")
-  local label = label_prefix .. item.completionText
-  local filter = label
-  if string.len(label) > 40 then label = string.sub(label, 0, 20) .. " ... " .. string.sub(label, string.len(label)-15, string.len(label)) end
-
+  item['filterText'] = string.sub(ctx.cursor_before_line, params.offset+1) .. item.displayText
+  print(vim.inspect(item.filterText))
+  local prefix = string.sub(params.context.cursor_before_line, item.range.start.character + 1, item.range["end"].character)
+  -- local prefix = formatter.deindent(string.sub(context.cursor_before_line, item.range.start.character + 1, item.range["end"].character))
   return {
     copilot = true, -- for comparator, only availiable in panel, not cycling
+    label = item.filterText,
     score = item.score or nil,
-    label = label,
-    filterText = label,
     kind = 15,
+    filterText = item.filterText,
     textEdit = {
-      newText = formatter.clean_insertion(item.text), --handle for panelCompletions
-      range = {
-        start = item.range.start,
-        ['end'] = params.context.cursor,
-      }
+      newText = item.completionText or formatter.clean_insertion(item.text), --handle for panelCompletions
+      range = item.range
     },
     documentation = {
       kind = "markdown",
       value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
     },
-    dup = 0,
   }
 end
 

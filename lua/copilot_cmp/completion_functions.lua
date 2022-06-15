@@ -2,8 +2,12 @@ local formatter = require("copilot_cmp.format")
 local util = require("copilot.util")
 local handler = require("copilot.handlers")
 local panel = require("copilot.extensions.panel")
-local methods = {}
+local methods = { id = 0 }
 
+-- 1. setup handlers to recieve notifications
+-- 2. recieve cmp callback and info
+-- 3. ???
+-- 4. send request to copilot
 methods.verify = function (bufnr, row)
   methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
   methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
@@ -69,29 +73,40 @@ methods.getCompletionsCycling = function (_, params, callback)
 end
 
 
+local create_handlers = function (id, params, callback)
+  local results = {}
+  id = tostring(id)
+
+  handler.add_id_callback("PanelSolution", id, function (solution)
+    table.insert(results, solution)
+  end)
+
+  handler.add_handler_callback("PanelSolutionsDone", id, function()
+    callback({ IsIncomplete = false, items = formatter.format_completions(results, params) })
+    vim.schedule(function () handler.remove_all_name(id) end)
+  end)
+end
+
+local req_params = function (id)
+  local req_params = util.get_completion_params()
+  req_params.panelId = tostring(id)
+  return req_params
+end
+
 methods.getPanelCompletions = function (self, params, callback)
-  local cmp_callback = callback
-
-  methods.get_cmp_callback = function ()
-    return cmp_callback
+  local request = self.client.rpc.request
+  local id = methods.id
+  local respond_callback = function (err, _)
+    methods.id = methods.id + 1
+    if err then return end
+    create_handlers(id, params, callback)
   end
-
-  if not self.panel then self.panel = panel.create(self.client) end
-  local sent, id
-  local bufnr = params.context.bufnr
-  local row = params.context.cursor.row
-  methods.verify(bufnr, row)
-  if sent and id then panel.client.rpc.cancel_request(id) end
-  sent, id = panel.send_request({ client = self.client, uri=tostring(bufnr) })
-  if not self.initialized then
-    methods.init_handlers()
-    self.initialized = true
-  end
-  callback({ isIncomplete = true, items = methods.get_completions(bufnr, row) })
+  request("getPanelCompletions", req_params(id), respond_callback)
 end
 
 methods.init = function (completion_method)
   methods.existing_matches = {}
+  methods.id = 0
   return methods[completion_method]
 end
 
