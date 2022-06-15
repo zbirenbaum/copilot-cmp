@@ -39,37 +39,63 @@ formatter.deindent = function(text)
   return string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
 end
 
-formatter.clean_insertion = function(text)
+-- shorten line, probably add config params for this later
+local shorten = function (str)
+  local short_prefix = string.sub(str, 0, 20)
+  local short_suffix = string.sub(str, string.len(str)-15, string.len(str))
+  local delimiter =  " ... "
+  return short_prefix .. delimiter .. short_suffix
+end
+
+local get_line_list = function (text)
   local indent = string.match(text, '^%s*')
   if not indent then return text end
   local list = split_remove_trailing_newline(string.gsub(text, '^' .. indent, ''))
-  list[1] = remove_string_from_end(list[1], get_text_after_cursor())
-  if #list > 1 then
-    list[#list] = remove_string_from_end(list[#list], get_line_text())
-  end
-  return remove_string_from_end(table.concat(list, '\n'), '\n')
+  return list
 end
 
+formatter.clean_insertion = function(text)
+  local line_list = type(text) == "table" and text or get_line_list(text)
+  line_list[1] = remove_string_from_end(line_list[1], get_text_after_cursor())
+  if #line_list > 1 then
+    line_list[#line_list] = remove_string_from_end(line_list[#line_list], get_line_text())
+  end
+  return remove_string_from_end(table.concat(line_list, '\n'), '\n')
+end
+
+-- So this method is awful but it isn't my fault
+--
+-- for getCompletionsCycling: \
+--    text = the whole line \
+--    displayText = just the part of the line after existing text \
+--    no completionText field
+--
+-- for getPanelCompletions: \
+--   no text field \
+--   displayText = the whole line (opposite in cycling)
+--   completionText = just the part after existing text (displayText in cycling)
 
 formatter.format_item = function(item, params)
-  item = vim.tbl_extend('force', {}, item)
-  item.text = item.text or item.displayText
-  -- print(vim.inspect(params))
+  local ctx = params.context
   local cleaned = formatter.deindent(item.text)
-  local prefix = params.context.cursor_before_line:sub(0, params.offset)
+
+  local prefix = ctx.cursor_before_line:sub(0, params.offset)
+
+  -- fix text matching for cmp (mostly)
   local label_prefix = prefix:gsub("^%s*", "")
-  local label = label_prefix .. item.completionText
-  local filter = label
-  if string.len(label) > 40 then label = string.sub(label, 0, 20) .. " ... " .. string.sub(label, string.len(label)-15, string.len(label)) end
+  local label = label_prefix ..(item.displayText)
+  local line_list = get_line_list(label)
+  local final_label = string.len(line_list[1]) > 40 and shorten(line_list[1]) or line_list[1]
+  local final_text = formatter.clean_insertion(line_list)
 
   return {
     copilot = true, -- for comparator, only availiable in panel, not cycling
     score = item.score or nil,
-    label = label,
+    label = final_label,
     filterText = label,
     kind = 15,
     textEdit = {
-      newText = formatter.clean_insertion(item.text), --handle for panelCompletions
+      newText = final_text,
       range = {
         start = item.range.start,
         ['end'] = params.context.cursor,
