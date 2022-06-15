@@ -4,7 +4,8 @@ This repository transforms https://github.com/zbirenbaum/copilot.lua into a cmp 
 
 Copilot suggestions will automatically be loaded into your cmp menu as snippets and display their full contents when a copilot suggestion is hovered.
 
-![copilot-cmp](https://user-images.githubusercontent.com/32016110/161629472-db4324f1-d091-441c-a681-d3d9b589ecd0.png)
+![copilot-cmp](https://user-images.githubusercontent.com/32016110/173933674-9ad85a5a-5ad7-41cd-9fcc-f5a698cc88ae.png)
+
 
 ## Setup
 
