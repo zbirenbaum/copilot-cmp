@@ -79,23 +79,24 @@ formatter.format_item = function(item, params)
   local ctx = params.context
   local cleaned = formatter.deindent(item.text)
 
-  local prefix = ctx.cursor_before_line:sub(0, params.offset)
+  -- local prefix = ctx.cursor_before_line:sub(0, params.offset)
 
+  local text = item.text:gsub("^%s*", "")
   -- fix text matching for cmp (mostly)
-  local label_prefix = prefix:gsub("^%s*", "")
-  local label = label_prefix ..(item.displayText)
-  local line_list = get_line_list(label)
-  local final_label = string.len(line_list[1]) > 40 and shorten(line_list[1]) or line_list[1]
-  local final_text = formatter.clean_insertion(line_list)
+  -- local label_prefix = prefix:gsub("^%s*", "")
+  local label = text
+  -- local line_list = get_line_list(label)
+  label = label:gsub("\n", "\\n")
+  local final_label = string.len(label) > 40 and shorten(label) or label
+  -- local final_text = formatter.clean_insertion(line_list)
 
   return {
     copilot = true, -- for comparator, only availiable in panel, not cycling
     score = item.score or nil,
     label = final_label,
-    filterText = label,
-    kind = 15,
+    kind = 1,
     textEdit = {
-      newText = final_text,
+      newText = text,
       range = {
         start = item.range.start,
         ['end'] = params.context.cursor,
