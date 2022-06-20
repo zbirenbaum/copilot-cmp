@@ -75,10 +75,14 @@ local create_handlers = function (id, params, callback)
     solution.text = solution.displayText
     solution.displayText = solution.completionText
     results[formatter.deindent(solution.text)] = solution --ensure unique
+    callback({
+      IsIncomplete = true,
+      items = formatter.format_item(solution, params)
+    })
   end)
 
   handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback({ IsIncomplete = true, items = formatter.format_completions(vim.tbl_values(results), params) })
+    callback({ IsIncomplete = false, items = formatter.format_completions(vim.tbl_values(results), params) })
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
 end
