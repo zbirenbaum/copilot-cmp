@@ -86,7 +86,6 @@ formatter.format_item = function(item, params)
   -- local label_prefix = prefix:gsub("^%s*", "")
   local label = text
   -- local line_list = get_line_list(label)
-  label = label:gsub("\n", "\\n")
   local final_label = string.len(label) > 40 and shorten(label) or label
   -- local final_text = formatter.clean_insertion(line_list)
 
@@ -96,7 +95,7 @@ formatter.format_item = function(item, params)
     label = final_label,
     kind = 1,
     textEdit = {
-      newText = text,
+      newText = formatter.clean_insertion(text),
       range = {
         start = item.range.start,
         ['end'] = params.context.cursor,
