@@ -25,17 +25,17 @@ end
 methods.getCompletionsCycling = function (_, params, callback)
   local bufnr = params.context.bufnr
   local row = params.context.cursor.row
-  methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
-  methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
+  -- methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
+  -- methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
 
   vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
-    if not response or vim.tbl_isempty(response.completions) then return end --j
-    methods.existing_matches[bufnr][row] = add_results(response.completions, params)
-    local existing_matches = methods.existing_matches[bufnr][row]
-    local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
-    callback({ IsIncomplete=true, items = completions })
+    if not response or vim.tbl_isempty(response.completions) then return end
+    -- methods.existing_matches[bufnr][row] = add_results(response.completions, params)
+    -- local existing_matches = methods.existing_matches[bufnr][row]
+    local completions = formatter.format_completions(vim.tbl_values(response.completions or {}), params)
+    callback({ IsIncomplete=false, items = completions })
   end)
-  local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
+  local completions = formatter.format_completions({}, params)
   callback({ IsIncomplete=true, items = completions })
 end
 
