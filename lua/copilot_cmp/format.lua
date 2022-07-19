@@ -78,6 +78,7 @@ end
 formatter.format_item = function(item, params)
   local ctx = params.context
   local cleaned = formatter.deindent(item.text)
+  print(vim.inspect(item))
 
   -- local prefix = ctx.cursor_before_line:sub(0, params.offset)
 
@@ -88,12 +89,11 @@ formatter.format_item = function(item, params)
   -- local line_list = get_line_list(label)
   local final_label = string.len(label) > 40 and shorten(label) or label
   -- local final_text = formatter.clean_insertion(line_list)
-
-  return {
+  local completion = {
     copilot = true, -- for comparator, only availiable in panel, not cycling
     score = item.score or nil,
     label = final_label,
-    kind = 1,
+    kind = 20,
     textEdit = {
       newText = formatter.clean_insertion(text),
       range = {
@@ -105,8 +105,10 @@ formatter.format_item = function(item, params)
       kind = "markdown",
       value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
     },
-    dup = 0,
   }
+  print(vim.inspect(completion))
+
+  return completion
 end
 
 formatter.format_completions = function(completions, params)
