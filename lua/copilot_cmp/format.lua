@@ -78,10 +78,7 @@ end
 formatter.format_item = function(item, params)
   local ctx = params.context
   local cleaned = formatter.deindent(item.text)
-  print(vim.inspect(item))
-
   -- local prefix = ctx.cursor_before_line:sub(0, params.offset)
-
   local text = item.text:gsub("^%s*", "")
   -- fix text matching for cmp (mostly)
   -- local label_prefix = prefix:gsub("^%s*", "")
@@ -106,8 +103,6 @@ formatter.format_item = function(item, params)
       value = "```" .. vim.bo.filetype .. "\n" .. cleaned .. "\n```"
     },
   }
-  print(vim.inspect(completion))
-
   return completion
 end
 
