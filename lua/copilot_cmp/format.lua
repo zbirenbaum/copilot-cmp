@@ -88,11 +88,11 @@ formatter.format_item = function(item, params)
   -- local line_list = get_line_list(label)
   local final_label = string.len(label) > 40 and shorten(label) or label
   -- local final_text = formatter.clean_insertion(line_list)
-
   return {
     copilot = true, -- for comparator, only availiable in panel, not cycling
     score = item.score or nil,
     label = final_label,
+    filterText = final_label:sub(0, final_label:len()-1),
     kind = 1,
     textEdit = {
       newText = formatter.clean_insertion(text),
