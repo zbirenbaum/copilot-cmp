@@ -27,16 +27,15 @@ methods.getCompletionsCycling = function (_, params, callback)
   local row = params.context.cursor.row
   methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
   methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
-
   vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
     if not response or vim.tbl_isempty(response.completions) then return end --j
     methods.existing_matches[bufnr][row] = add_results(response.completions, params)
     local existing_matches = methods.existing_matches[bufnr][row]
     local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
-    callback({ IsIncomplete=true, items = completions })
+    callback(completions)
   end)
   local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
-  callback({ IsIncomplete=true, items = completions })
+  callback(completions)
 end
 
 
@@ -82,7 +81,7 @@ local create_handlers = function (id, params, callback)
   end)
 
   handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback({ IsIncomplete = false, items = formatter.format_completions(vim.tbl_values(results), params) })
+    callback(formatter.format_completions(vim.tbl_values(results), params))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
 end
