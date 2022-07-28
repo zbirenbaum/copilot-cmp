@@ -1,5 +1,6 @@
 local formatter= {}
 
+local close_chars = { [')'] = true, [']'] = true, ['}'] = true }
 local shorten = function (str)
   local short_prefix = string.sub(str, 0, 20)
   local short_suffix = string.sub(str, string.len(str)-15, string.len(str))
@@ -44,14 +45,25 @@ local check_exists = function (text_list)
 end
 
 local format_insert_text = function (deindented, ctx)
+  -- if ctx.cursor_after_line[1]
+
   local indent_string = get_indent_string(ctx)
+
   local text_list = str_to_list(deindented)
+
+  --do this before check_exists so that we end after existing
+  local fmt_info = {
+    startl = ctx.cursor.row,
+    endl = #text_list + ctx.cursor.row - 1,
+    n_lines = #text_list,
+  }
   -- this is necessary because first line starts at cursor pos
   for line_idx = 2, #text_list do
     text_list[line_idx] = indent_string .. text_list[line_idx]
   end
   text_list = check_exists(text_list)
-  return table.concat(text_list, '\n')
+  local fmt_string = table.concat(text_list, '\n')
+  return fmt_string, fmt_info
 end
 
 local format_label_text = function (item)
@@ -61,12 +73,18 @@ local format_label_text = function (item)
 end
 
 local format_item = function(item, params)
+  -- local after_without_ws = params.context.cursor_after_line:match("^%s*(.-)%s*$")
+  -- if #after_without_ws > 0 and close_chars[after_without_ws] then
+  --   item.text = item.text .. after_without_ws .. '\n'
+  -- end
   local deindented = formatter.deindent(item.text)
-  local insert_text = format_insert_text(deindented, params.context)
+  local insert_text, fmt_info = format_insert_text(deindented, params.context)
   local label_text = format_label_text(item)
+
   return {
     copilot = true, -- for comparator, only availiable in panel, not cycling
     score = item.score or nil,
+    fmt_info = fmt_info,
     label = label_text,
     filterText = label_text:sub(0, label_text:len()-1),
     kind = 1,
