@@ -37,7 +37,6 @@ end
 source.new = function(client, opts)
   opts = opts or {}
   local completion_fn = opts.completion_fn
-  print(vim.inspect(opts))
 
   local completion_functions = require("copilot_cmp.completion_functions")
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
