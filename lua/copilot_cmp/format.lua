@@ -88,6 +88,10 @@ local format_item = function(item, params)
     label = label_text,
     filterText = label_text:sub(0, label_text:len()-1),
     kind = 1,
+    cmp = {
+      kind_hl_group = "CmpItemKindCopilot",
+      kind_text = 'Copilot',
+    },
     textEdit = {
       newText = insert_text,
       range = {

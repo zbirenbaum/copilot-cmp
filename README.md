@@ -45,27 +45,19 @@ cmp.setup {
 }
 ```
 
-##### Highlighting
+##### Highlighting & Icon
 
-You can create a custom entry label and highlight group for copilot completions similar to those for different Lsp kinds by modifying the format function of your cmp config. By default, copilot entries will appear with the `Snippet` label and highlight
+Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map. If you do not use lspkind, simply add the custom icon however you normally handle `kind` formatting and it will integrate as if it was any other normal lsp completion kind.
 
 Example:
-
 ```lua
-cmp.setup {
-  ...
-  formatting = {
-    format = function (entry, vim_item)
-      if entry.source.name == "copilot" then
-        vim_item.kind = "[] Copilot"
-        vim_item.kind_hl_group = "CmpItemKindCopilot"
-        return vim_item
-      end
-      return lspkind.cmp_format({ with_text = false, maxwidth = 50 })(entry, vim_item)
-    end
-  }
-  ...
-}
+-- lspkind.lua
+local lspkind = require("lspkind")
+lspkind.init({
+  symbol_map = {
+    Copilot = "[]",
+  },
+},
 
 vim.api.nvim_set_hl(0, "CmpItemKindCopilot", {fg ="#6CC644"})
 ```
