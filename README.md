@@ -47,20 +47,38 @@ cmp.setup {
 
 ##### Highlighting & Icon
 
-Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map. If you do not use lspkind, simply add the custom icon however you normally handle `kind` formatting and it will integrate as if it was any other normal lsp completion kind.
+Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map. 
 
-Example:
 ```lua
 -- lspkind.lua
 local lspkind = require("lspkind")
 lspkind.init({
   symbol_map = {
-    Copilot = "[]",
+    Copilot = "",
   },
 },
 
 vim.api.nvim_set_hl(0, "CmpItemKindCopilot", {fg ="#6CC644"})
 ```
+
+Alternatively, you can add Copilot to the lspkind `symbol_map` within the cmp format function.
+
+```lua
+-- cmp.lua
+cmp.setup {
+  ...
+  formatting = {
+    format = lspkind.cmp_format({
+      mode = "symbol",
+      max_width = 50,
+      symbol_map = { Copilot = "" }
+    })
+  }
+  ...
+}
+```
+
+If you do not use lspkind, simply add the custom icon however you normally handle `kind` formatting and it will integrate as if it was any other normal lsp completion kind.
 
 ##### Tab Completion Configuration (Highly Recommended)
 Unlike other completion sources, copilot can use other lines above or below an empty line to provide a completion. This can cause problematic for individuals that select menu entries with `<TAB>`. This behavior is configurable via cmp's config and the following code will make it so that the menu still appears normally, but tab will fallback to indenting unless a non-whitespace character has actually been typed.
