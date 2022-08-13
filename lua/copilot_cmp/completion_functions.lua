@@ -22,7 +22,7 @@ local add_results = function (completions, params)
   return existing_matches_loc
 end
 
-methods.getCompletionsCycling = function (_, params, callback)
+methods.getCompletionsCycling = function (self, params, callback)
   local bufnr = params.context.bufnr
   local row = params.context.cursor.row
   methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
@@ -32,10 +32,10 @@ methods.getCompletionsCycling = function (_, params, callback)
     methods.existing_matches[bufnr][row] = add_results(response.completions, params)
     local existing_matches = methods.existing_matches[bufnr][row]
     local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
-    callback(completions)
+    callback({ IsIncomplete = self.complete_empty, items = completions })
   end)
-  local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
-  callback(completions)
+  -- local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
+  -- callback({ IsIncomplete = self.complete_empty, items = completions })
 end
 
 
@@ -75,7 +75,7 @@ local create_handlers = function (id, params, callback)
     solution.displayText = solution.completionText
     results[formatter.deindent(solution.text)] = solution --ensure unique
     callback({
-      IsIncomplete = true,
+      IsIncomplete = params.complete_empty,
       items = formatter.format_item(solution, params)
     })
   end)
@@ -93,6 +93,7 @@ local req_params = function (id)
 end
 
 methods.getPanelCompletions = function (self, params, callback)
+  params.complete_empty = self.complete_empty
   local request = self.client.rpc.request
   local id = methods.id
   local respond_callback = function (err, _)
@@ -102,7 +103,7 @@ methods.getPanelCompletions = function (self, params, callback)
   end
   local sent, _ = request("getPanelCompletions", req_params(id), respond_callback)
   if not sent then handler.remove_all_name(id) end
-  callback({ IsIncomplete = true, items = {}})
+  callback({ IsIncomplete = self.complete_empty, items = {}})
 end
 
 methods.init = function (completion_method)

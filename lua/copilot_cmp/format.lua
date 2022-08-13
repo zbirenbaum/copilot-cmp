@@ -1,6 +1,7 @@
 local formatter= {}
 
 local close_chars = { [')'] = true, [']'] = true, ['}'] = true }
+
 local shorten = function (str)
   local short_prefix = string.sub(str, 0, 20)
   local short_suffix = string.sub(str, string.len(str)-15, string.len(str))
@@ -114,12 +115,9 @@ formatter.deindent = function(text)
 end
 
 formatter.format_completions = function(completions, params)
-  return {
-    IsIncomplete = true,
-    items = vim.tbl_map(function(item)
-      return format_item(item, params)
-    end, completions)
-  }
+  return vim.tbl_map(function(item)
+    return format_item(item, params)
+  end, completions)
 end
 
 return formatter
