@@ -23,10 +23,10 @@ local create_handlers_cycling = function (id, params, callback)
   end)
 
   -- TODO: Is this needed?
-  -- handler.add_handler_callback("PanelSolutionsDone", id, function()
-  --   callback(formatter.format_completions(vim.tbl_values(results), params))
-  --   vim.schedule(function () handler.remove_all_name(id) end)
-  -- end)
+  handler.add_handler_callback("CyclingCompletionsDone", id, function()
+    callback(formatter.format_completions(vim.tbl_values(results), params))
+    vim.schedule(function () handler.remove_all_name(id) end)
+  end)
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
