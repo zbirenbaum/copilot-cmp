@@ -3,43 +3,59 @@ local util = require("copilot.util")
 local handler = require("copilot.handlers")
 local methods = { id = 0 }
 
--- QQ: This seems to need a different name but naming convention is not clear
-local create_handlers_cycling = function (id, params, callback)
-  local results = {}
-  id = tostring(id)
-  -- QQ: how are solutions provided to this handler
-  handler.add_handler_callback("getCompletionsCycling", id, function (solution)
-    solution.range.start = {
-      character = 0,
-      line = solution.range.start.line,
-    }
-    solution.text = solution.displayText
-    solution.displayText = solution.completionText
-    results[formatter.deindent(solution.text)] = solution --ensure unique
-    callback({
-      IsIncomplete = true,
-      items = formatter.format_item(solution, params)
-    })
-  end)
+-- TODO: Clean up cycling a bit
+-- Compared to PanelCompletions, cycling isn't great
+-- All these local methods just used by cycling is a pretty huge waste
+local add_result = function (completion, params)
+  if not completion then return end
+  local bufnr = params.context.bufnr
+  local row = params.context.cursor.row
+  local existing_matches = methods.existing_matches
+  existing_matches[bufnr][row][formatter.deindent(completion.text)] = completion
+  return existing_matches[bufnr][row]
+end
 
-  -- TODO: Is this needed?
-  handler.add_handler_callback("CyclingCompletionsDone", id, function()
-    callback(formatter.format_completions(vim.tbl_values(results), params))
-    vim.schedule(function () handler.remove_all_name(id) end)
-  end)
+-- add multiple
+local add_results = function (completions, params)
+  local existing_matches_loc = {}
+  for _, completion in ipairs(completions) do existing_matches_loc = add_result(completion, params) end
+  return existing_matches_loc
+end
+
+-- utility for keeping track of function calls
+local req_params = function (id)
+  local req_params = util.get_completion_params()
+  req_params.panelId = tostring(id)
+  return req_params
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
   local request = self.client.rpc.request
   local id = methods.id
-  local respond_callback = function (err, _)
+  -- initiate matches to pass on
+  local bufnr = params.context.bufnr
+  local row = params.context.cursor.row
+  methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
+  methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
+
+  -- handler of the RPC request
+  local respond_callback = function (err, response)
     methods.id = methods.id + 1
     if err then return end
-    create_handlers_cycling(id, params, callback)
+    -- process response from Copilot via simple cycling through results
+    if not response or vim.tbl_isempty(response.completions) then return end --j
+    methods.existing_matches[bufnr][row] = add_results(response.completions, params)
+    local existing_matches = methods.existing_matches[bufnr][row]
+    local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
+    callback(completions)
   end
   local sent, _ = request("getCompletionsCycling", req_params(id), respond_callback)
+
+  -- clean up if the call was unsuccessful
   if not sent then handler.remove_all_name(id) end
-  callback({ IsIncomplete = true, items = {}})
+  -- pass empty completions if there was a failure upstream
+  local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
+  callback(completions)
 end
 
 --[[
@@ -87,12 +103,6 @@ local create_handlers = function (id, params, callback)
     callback(formatter.format_completions(vim.tbl_values(results), params))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
-end
-
-local req_params = function (id)
-  local req_params = util.get_completion_params()
-  req_params.panelId = tostring(id)
-  return req_params
 end
 
 methods.getPanelCompletions = function (self, params, callback)
