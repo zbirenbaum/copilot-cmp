@@ -52,7 +52,8 @@ methods.getCompletionsCycling = function (self, params, callback)
   local sent, _ = request("getCompletionsCycling", req_params(id), respond_callback)
 
   -- clean up if the call was unsuccessful
-  if not sent then handler.remove_all_name(id) end
+  -- NOT NEEDED, no handlers created:
+  -- if not sent then handler.remove_all_name(id) end
   -- pass empty completions if there was a failure upstream
   local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
   callback(completions)
