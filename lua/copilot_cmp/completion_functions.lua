@@ -22,39 +22,24 @@ local add_results = function (completions, params)
   return existing_matches_loc
 end
 
--- utility for keeping track of function calls
-local req_params = function (id)
-  local req_params = util.get_completion_params()
-  req_params.panelId = tostring(id)
-  return req_params
-end
-
 methods.getCompletionsCycling = function (self, params, callback)
   local request = self.client.rpc.request
-  local id = methods.id
-  -- initiate matches to pass on
   local bufnr = params.context.bufnr
   local row = params.context.cursor.row
+
   methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
   methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
 
-  -- handler of the RPC request
-  local respond_callback = function (err, response)
-    methods.id = methods.id + 1
-    if err then return end
-    -- process response from Copilot via simple cycling through results
+  local respond_callback = function(err, response)
+    if err then return err end
     if not response or vim.tbl_isempty(response.completions) then return end --j
     methods.existing_matches[bufnr][row] = add_results(response.completions, params)
     local existing_matches = methods.existing_matches[bufnr][row]
     local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
     callback(completions)
   end
-  local sent, _ = request("getCompletionsCycling", req_params(id), respond_callback)
 
-  -- clean up if the call was unsuccessful
-  -- NOT NEEDED, no handlers created:
-  -- if not sent then handler.remove_all_name(id) end
-  -- pass empty completions if there was a failure upstream
+  request("getCompletionsCycling", util.get_completion_params(), respond_callback)
   local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
   callback(completions)
 end
@@ -104,6 +89,12 @@ local create_handlers = function (id, params, callback)
     callback(formatter.format_completions(vim.tbl_values(results), params))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
+end
+
+local req_params = function (id)
+  local req_params = util.get_completion_params()
+  req_params.panelId = tostring(id)
+  return req_params
 end
 
 methods.getPanelCompletions = function (self, params, callback)
