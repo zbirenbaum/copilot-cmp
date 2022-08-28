@@ -22,22 +22,27 @@ local add_results = function (completions, params)
   return existing_matches_loc
 end
 
-methods.getCompletionsCycling = function (_, params, callback)
+methods.getCompletionsCycling = function (self, params, callback)
+  local request = self.client.rpc.request
   local bufnr = params.context.bufnr
   local row = params.context.cursor.row
+
   methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
   methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
-  vim.lsp.buf_request(0, "getCompletionsCycling", util.get_completion_params(), function(_, response)
+
+  local respond_callback = function(err, response)
+    if err then return err end
     if not response or vim.tbl_isempty(response.completions) then return end --j
     methods.existing_matches[bufnr][row] = add_results(response.completions, params)
     local existing_matches = methods.existing_matches[bufnr][row]
     local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
     callback(completions)
-  end)
+  end
+
+  request("getCompletionsCycling", util.get_completion_params(), respond_callback)
   local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
   callback(completions)
 end
-
 
 --[[
 In the entirity of copilot.lua and copilot_cmp this is probably the most complex, but also elegant code
