@@ -33,9 +33,18 @@ source.is_available = function(self)
   end
   return true
 end
+local defaults =  {
+  method = "getCompletionsCycling",
+  force_autofmt = false,
+  formatters = {
+    label = require("copilot_cmp.format").format_label_text,
+    insert_text = require("copilot_cmp.format").remove_existing,
+    preview = require("copilot_cmp.format").deindent,
+  },
+}
 
 source.new = function(client, opts)
-  opts = opts or {}
+  opts = vim.tbl_deep_extend('force', defaults, opts or {})
   local completion_fn = opts.completion_fn
 
   local completion_functions = require("copilot_cmp.completion_functions")
@@ -44,7 +53,20 @@ source.new = function(client, opts)
   self.execute = opts.autofmt and source.autofmt or nil
   self.client = client
   self.request_ids = {}
+
+  self.formatters = vim.tbl_deep_extend("force", {}, opts.formatters or {})
+  if not self.formatters.label then
+    self.formatters.label = require("copilot_cmp.format").format_label_text
+  end
+  if not self.formatters.insert_text then
+    self.formatters.insert_text = require("copilot_cmp.format").format_insert_text
+  end
+  if not self.formatters.preview then
+    self.formatters.preview = require("copilot_cmp.format").deindent
+  end
+
   self.complete = completion_fn and completion_functions.init(completion_fn) or completion_functions.init("getCompletionsCycling")
+
   return self
 end
 

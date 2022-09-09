@@ -16,7 +16,10 @@ If you already have copilot.lua installed, you can install this plugin with pack
 ```lua
 use {
   "zbirenbaum/copilot-cmp",
-  module = "copilot_cmp",
+  after = { "copilot.lua" },
+  config = function ()
+    require("copilot-cmp").setup()
+  end
 },
 ```
 
@@ -24,6 +27,55 @@ If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/co
 
 ### Configuration
 
+##### Default Options:
+These are the default options for copilot-cmp which can be configured via the setup function:
+```lua
+{
+  method = "getCompletionsCycling",
+  force_autofmt = false,
+  formatters = {
+    label = require("copilot_cmp.format").format_label_text,
+    insert_text = require("copilot_cmp.format").format_label_text
+    preview = require("copilot_cmp.format").deindent,
+  },
+}
+```
+
+##### method
+
+Set the `method` field to `getCompletionsCycling` if you are having issues. getPanelCompletions previously worked just as quickly, and did not limit completions in the cmp menu to 3 recommendations, but has become so slow completions do not seem to appear due to recent changes from Microsoft. getPanelCompletions also allows for the comparator provided in copilot-cmp to not just place all copilot completions on top, but also sort them by the `score` copilot assigns them, which is not provided by getCompletionsCycling. Example:
+
+```lua
+-- Recommended
+require("copilot-cmp").setup {
+  method = "getCompletionsCycling",
+},
+```
+
+```lua
+-- Not Currently Recommended
+require("copilot-cmp").setup {
+  method = "getPanelCompletions",
+},
+```
+
+##### force_autofmt
+this option will cause the insertions to be formatted using the vim format function (e.g.`gg=G`) after every insertion
+
+##### formatters
+The `label` field corresponds to the function returning the label of the entry in nvim-cmp, `insert_text` corresponds to the actual text that is inserted, and `preview` corresponds to the text shown in the documentation window when hovering the completion.
+
+There is an experimental method for attempting to remove extraneous characters such as extra ending parenthesis that appears to work fairly well. If you wish to use it, simply place the following in your setup function:
+```lua
+{
+  formatters = {
+    insert_text = require("copilot_cmp.format").remove_existing
+  },
+}
+
+
+```
+Additionally, each field can be overriden by a user function that takes (item, ctx) as parameters and should return a string representing what you wish to supply cmp. This is an advanced feature to provide maximum configurability for how the source will format the raw output from Copilot. These functions can be extremely complex, and this is feature only recommended for advanced users, so taking a look at how the default functions work inside of `format.lua` will likely be necessary if you wish to override the behavior.
 ##### Source Definition
 
 To link cmp with this source, simply go into your cmp configuration file and include `{ name = "copilot" }` under your sources

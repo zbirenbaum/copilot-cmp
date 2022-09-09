@@ -1,7 +1,47 @@
-local formatter = require("copilot_cmp.format")
+local format = require("copilot_cmp.format")
 local util = require("copilot.util")
 local handler = require("copilot.handlers")
 local methods = { id = 0 }
+
+
+local format_item = function(item, params, formatters)
+  local insert_text, fmt_info = formatters.insert_text(item, params.context)
+  local preview = formatters.preview(item.text)
+  local label_text = formatters.label(item)
+  return {
+    copilot = true, -- for comparator, only availiable in panel, not cycling
+    score = item.score or nil,
+    fmt_info = fmt_info,
+    label = label_text,
+    filterText = label_text:sub(0, label_text:len()-1),
+    kind = 1,
+    cmp = {
+      kind_hl_group = "CmpItemKindCopilot",
+      kind_text = 'Copilot',
+    },
+    textEdit = {
+      newText = insert_text,
+      range = {
+        start = item.range.start,
+        ['end'] = params.context.cursor,
+      }
+    },
+    documentation = {
+      kind = "markdown",
+      value = "```" .. vim.bo.filetype .. "\n" .. preview .. "\n```"
+    },
+    dup = 1,
+  }
+end
+
+local format_completions = function(completions, params, formatters)
+  return {
+    IsIncomplete = true,
+    items = vim.tbl_map(function(item)
+      return format_item(item, params, formatters)
+    end, completions)
+  }
+end
 
 -- TODO: Clean up cycling a bit
 -- Compared to PanelCompletions, cycling isn't great
@@ -11,7 +51,7 @@ local add_result = function (completion, params)
   local bufnr = params.context.bufnr
   local row = params.context.cursor.row
   local existing_matches = methods.existing_matches
-  existing_matches[bufnr][row][formatter.deindent(completion.text)] = completion
+  existing_matches[bufnr][row][format.deindent(completion.text)] = completion
   return existing_matches[bufnr][row]
 end
 
@@ -35,12 +75,12 @@ methods.getCompletionsCycling = function (self, params, callback)
     if not response or vim.tbl_isempty(response.completions) then return end --j
     methods.existing_matches[bufnr][row] = add_results(response.completions, params)
     local existing_matches = methods.existing_matches[bufnr][row]
-    local completions = formatter.format_completions(vim.tbl_values(existing_matches or {}), params)
+    local completions = format_completions(vim.tbl_values(existing_matches or {}), params, self.formatters)
     callback(completions)
   end
 
   request("getCompletionsCycling", util.get_completion_params(), respond_callback)
-  local completions = formatter.format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params)
+  local completions = format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params, self.formatters)
   callback(completions)
 end
 
@@ -66,7 +106,7 @@ Here's the breakdown on how I handle it:
   7. Finally, clean up the hooks so that we don't eat up memory
 --]]
 
-local create_handlers = function (id, params, callback)
+local create_handlers = function (id, params, callback, formatters)
   local results = {}
   id = tostring(id)
   handler.add_handler_callback("PanelSolution", id, function (solution)
@@ -78,15 +118,15 @@ local create_handlers = function (id, params, callback)
     }
     solution.text = solution.displayText
     solution.displayText = solution.completionText
-    results[formatter.deindent(solution.text)] = solution --ensure unique
+    results[format.deindent(solution.text)] = solution --ensure unique
     callback({
       IsIncomplete = true,
-      items = formatter.format_item(solution, params)
+      items = format_item(solution, params, formatters)
     })
   end)
 
   handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback(formatter.format_completions(vim.tbl_values(results), params))
+    callback(format_completions(vim.tbl_values(results), params))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
 end
@@ -103,7 +143,7 @@ methods.getPanelCompletions = function (self, params, callback)
   local respond_callback = function (err, _)
     methods.id = methods.id + 1
     if err then return end
-    create_handlers(id, params, callback)
+    create_handlers(id, params, callback, self.formatters)
   end
   local sent, _ = request("getPanelCompletions", req_params(id), respond_callback)
   if not sent then handler.remove_all_name(id) end
