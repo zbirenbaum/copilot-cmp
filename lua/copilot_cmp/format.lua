@@ -60,16 +60,20 @@ format.format_remove_existing = function (item, ctx)
   local get_line_text = function (line, start_col)
     return vim.api.nvim_buf_get_text(0, line, start_col or 0, line+1, -1, {})[1]
   end
+
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
-  local next_line = get_line_text(cursor_pos[1])
-
-  local suffix = get_line_text(cursor_pos[1]-1, cursor_pos[2])
-
+  local suffix = ctx.cursor_after_line
   local text_list, fmt_info = format.get_format_text_list(item, ctx)
   if suffix and suffix ~= '' then
     text_list[#text_list] = remove_suffix_match(suffix, text_list[#text_list])
   end
 
+  -- do not do nextline checks if on the last line
+  if vim.api.nvim_buf_line_count(0) <= vim.fn.line('.') then
+    return text_list, fmt_info
+  end
+
+  local next_line = get_line_text(cursor_pos[1])
   local start_match = -1
   local match = false
   for i, line in ipairs(text_list) do
