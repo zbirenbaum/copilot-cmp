@@ -18,7 +18,7 @@ use {
   "zbirenbaum/copilot-cmp",
   after = { "copilot.lua" },
   config = function ()
-    require("copilot-cmp").setup()
+    require("copilot_cmp").setup()
   end
 },
 ```
@@ -35,7 +35,7 @@ These are the default options for copilot-cmp which can be configured via the se
   force_autofmt = false,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
-    insert_text = require("copilot_cmp.format").format_label_text
+    insert_text = require("copilot_cmp.format").format_label_text,
     preview = require("copilot_cmp.format").deindent,
   },
 }
@@ -47,14 +47,14 @@ Set the `method` field to `getCompletionsCycling` if you are having issues. getP
 
 ```lua
 -- Recommended
-require("copilot-cmp").setup {
+require("copilot_cmp").setup {
   method = "getCompletionsCycling",
 },
 ```
 
 ```lua
 -- Not Currently Recommended
-require("copilot-cmp").setup {
+require("copilot_cmp").setup {
   method = "getPanelCompletions",
 },
 ```
@@ -99,7 +99,7 @@ cmp.setup {
 
 ##### Highlighting & Icon
 
-Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map. 
+Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map.
 
 ```lua
 -- lspkind.lua
