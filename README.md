@@ -35,7 +35,7 @@ These are the default options for copilot-cmp which can be configured via the se
   force_autofmt = false,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
-    insert_text = require("copilot_cmp.format").format_label_text
+    insert_text = require("copilot_cmp.format").format_label_text,
     preview = require("copilot_cmp.format").deindent,
   },
 }
