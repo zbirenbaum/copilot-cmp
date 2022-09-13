@@ -20,7 +20,7 @@ use {
   config = function ()
     require("copilot_cmp").setup()
   end
-},
+}
 ```
 
 If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/copilot.lua and follow the instructions there before installing this one
@@ -47,16 +47,16 @@ Set the `method` field to `getCompletionsCycling` if you are having issues. getP
 
 ```lua
 -- Recommended
-require("copilot-cmp").setup {
+require("copilot_cmp").setup {
   method = "getCompletionsCycling",
-},
+}
 ```
 
 ```lua
 -- Not Currently Recommended
-require("copilot-cmp").setup {
+require("copilot_cmp").setup {
   method = "getPanelCompletions",
-},
+}
 ```
 
 ##### force_autofmt
@@ -99,7 +99,7 @@ cmp.setup {
 
 ##### Highlighting & Icon
 
-Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map. 
+Copilot's cmp source now has a builtin highlight group `CmpItemKindCopilot`. To add an icon to copilot for lspkind, simply add copilot to your lspkind symbol map.
 
 ```lua
 -- lspkind.lua
@@ -108,7 +108,7 @@ lspkind.init({
   symbol_map = {
     Copilot = "",
   },
-},
+}
 
 vim.api.nvim_set_hl(0, "CmpItemKindCopilot", {fg ="#6CC644"})
 ```
