@@ -20,7 +20,7 @@ use {
   config = function ()
     require("copilot_cmp").setup()
   end
-},
+}
 ```
 
 If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/copilot.lua and follow the instructions there before installing this one
