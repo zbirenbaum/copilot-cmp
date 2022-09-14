@@ -3,7 +3,6 @@ local util = require("copilot.util")
 local handler = require("copilot.handlers")
 local methods = { id = 0 }
 
-
 local format_item = function(item, params, formatters)
   local insert_text, fmt_info = formatters.insert_text(item, params.context)
   local preview = formatters.preview(item.text)
@@ -43,45 +42,28 @@ local format_completions = function(completions, params, formatters)
   }
 end
 
--- TODO: Clean up cycling a bit
--- Compared to PanelCompletions, cycling isn't great
--- All these local methods just used by cycling is a pretty huge waste
-local add_result = function (completion, params)
-  if not completion then return end
-  local bufnr = params.context.bufnr
-  local row = params.context.cursor.row
-  local existing_matches = methods.existing_matches
-  existing_matches[bufnr][row][format.deindent(completion.text)] = completion
-  return existing_matches[bufnr][row]
-end
-
--- add multiple
 local add_results = function (completions, params)
-  local existing_matches_loc = {}
-  for _, completion in ipairs(completions) do existing_matches_loc = add_result(completion, params) end
-  return existing_matches_loc
+  local results = {}
+  -- normalize completion and use as key to avoid duplicates
+  for _, completion in ipairs(completions) do
+    results[format.deindent(completion.text)] = completion
+  end
+  return results
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
   local request = self.client.rpc.request
-  local bufnr = params.context.bufnr
-  local row = params.context.cursor.row
-
-  methods.existing_matches[bufnr] = methods.existing_matches[bufnr] or {}
-  methods.existing_matches[bufnr][row] = methods.existing_matches[bufnr][row] or {}
 
   local respond_callback = function(err, response)
     if err then return err end
-    if not response or vim.tbl_isempty(response.completions) then return end --j
-    methods.existing_matches[bufnr][row] = add_results(response.completions, params)
-    local existing_matches = methods.existing_matches[bufnr][row]
-    local completions = format_completions(vim.tbl_values(existing_matches or {}), params, self.formatters)
-    callback(completions)
+    if not response or vim.tbl_isempty(response.completions) then return end
+    local completions = vim.tbl_values(add_results(response.completions, params))
+    callback(format_completions(completions, params, self.formatters))
   end
 
   request("getCompletionsCycling", util.get_completion_params(), respond_callback)
-  local completions = format_completions(vim.tbl_values(methods.existing_matches[bufnr][row] or {}), params, self.formatters)
-  callback(completions)
+  -- Callback to cmp with empty completions so it doesn't freeze
+  callback(format_completions({}, params, self.formatters))
 end
 
 --[[
