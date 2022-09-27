@@ -108,7 +108,7 @@ local create_handlers = function (id, params, callback, formatters)
   end)
 
   handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback(format_completions(vim.tbl_values(results), params))
+    callback(format_completions(vim.tbl_values(results), params, formatters))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
 end
