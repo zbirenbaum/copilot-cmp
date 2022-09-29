@@ -1,6 +1,6 @@
 local format = require("copilot_cmp.format")
 local util = require("copilot.util")
-local handler = require("copilot.handlers")
+local handler = require("copilot_cmp.handlers")
 local methods = { id = 0 }
 
 local format_item = function(item, params, formatters)
