@@ -8,7 +8,14 @@ source.get_trigger_characters = function()
   return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
 end
 
-source.autofmt = function (_, completion_item, callback)
+local clear_after_cursor = function (completion_item)
+  local range = completion_item.textEdit.range
+  local start = range.start
+  vim.api.nvim_buf_set_text(0, start.line, start.character, start.line, vim.fn.getline('.'):len(), {''})
+  return completion_item
+end
+
+local autofmt = function (completion_item)
   vim.schedule(function ()
     local fmt_info = completion_item.fmt_info
     vim.api.nvim_win_set_cursor(0, {fmt_info.startl, 0})
@@ -16,7 +23,16 @@ source.autofmt = function (_, completion_item, callback)
     local endl_contents = vim.api.nvim_buf_get_lines(0, fmt_info.endl-1, fmt_info.endl+1, false)[1] or ""
     vim.api.nvim_win_set_cursor(0, {fmt_info.endl, #endl_contents})
   end)
-  return callback()
+  return completion_item
+end
+
+-- executes on selection before insertion
+source.execute = function (self, completion_item, callback)
+  for _, fn in ipairs(self.executions) do
+    -- currently the execution functions do not edit the insertion, but they may later
+    completion_item = fn(completion_item)
+  end
+  callback(completion_item)
 end
 
 source.is_available = function(self)
@@ -36,6 +52,7 @@ end
 local defaults =  {
   method = "getCompletionsCycling",
   force_autofmt = false,
+  clear_after_cursor = false,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
@@ -50,7 +67,16 @@ source.new = function(client, opts)
   local completion_functions = require("copilot_cmp.completion_functions")
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
 
-  self.execute = opts.autofmt and source.autofmt or nil
+  local setup_execution_functions = function ()
+    local executions = {
+      opts.clear_after_cursor and clear_after_cursor or nil,
+      opts.force_autofmt and autofmt or nil,
+    }
+    return executions
+  end
+
+  self.executions = setup_execution_functions()
+
   self.client = client
   self.request_ids = {}
 
