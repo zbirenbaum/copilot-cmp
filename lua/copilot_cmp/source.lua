@@ -52,7 +52,7 @@ end
 local defaults =  {
   method = "getCompletionsCycling",
   force_autofmt = false,
-  clear_after_cursor = false,
+  clear_after_cursor = true,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
