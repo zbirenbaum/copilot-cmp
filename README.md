@@ -33,7 +33,6 @@ These are the default options for copilot-cmp which can be configured via the se
 {
   method = "getCompletionsCycling",
   force_autofmt = false,
-  clear_after_cursor = true,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
@@ -64,7 +63,21 @@ require("copilot_cmp").setup {
 this option will cause the insertions to be formatted using the vim format function (e.g.`gg=G`) after every insertion
 
 ##### clear_after_cursor
-this option will cause any text on the current line after the cursor to be cleared before inserting new text. It is highly recommended to leave this set to true if you use any sort of autopairs plugin.
+(10-09-22): Due to changes in cmp, this option will cause the whole line to be deleted, so I have removed it until it is clear whether this behavior is a result of intended or buggy behavior. Fortunately, the issue this option was implemented to fix seems to no longer be a problem you use 'replace' for the confirmation behavior.
+
+cmp config example:
+```lua
+cmp.setup({
+  mapping = {
+    ["<CR>"] = cmp.mapping.confirm({
+      -- this is the important line
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = false,
+    }),
+  }
+})
+
+```
 
 ##### formatters
 The `label` field corresponds to the function returning the label of the entry in nvim-cmp, `insert_text` corresponds to the actual text that is inserted, and `preview` corresponds to the text shown in the documentation window when hovering the completion.

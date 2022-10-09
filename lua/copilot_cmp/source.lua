@@ -11,7 +11,7 @@ end
 local clear_after_cursor = function (completion_item)
   local range = completion_item.textEdit.range
   local start = range.start
-  vim.api.nvim_buf_set_text(0, start.line, start.character, start.line, vim.fn.getline('.'):len(), {''})
+  vim.api.nvim_buf_set_text(0, start.line, start.character, start.line, vim.fn.getline('.'):len(), {})
   return completion_item
 end
 
@@ -49,10 +49,12 @@ source.is_available = function(self)
   end
   return true
 end
+
 local defaults =  {
   method = "getCompletionsCycling",
   force_autofmt = false,
-  clear_after_cursor = true,
+  -- should not be necessary due to cmp changes
+  -- clear_after_cursor = true,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
@@ -69,7 +71,8 @@ source.new = function(client, opts)
 
   local setup_execution_functions = function ()
     local executions = {
-      opts.clear_after_cursor and clear_after_cursor or nil,
+      -- should not be necessary due to cmp changes
+      -- opts.clear_after_cursor and clear_after_cursor or nil,
       opts.force_autofmt and autofmt or nil,
     }
     return executions
