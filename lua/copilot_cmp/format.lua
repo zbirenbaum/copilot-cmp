@@ -16,6 +16,7 @@ local str_to_list = function (str)
   return vim.fn.split(str, "\n")
 end
 
+
 format.get_format_text_list = function (item, ctx)
   -- removes a line if and only if text at all values >= lineidx equals existing text with proper indentation
   -- TODO: this would be much cleaner as a recursive function
@@ -31,7 +32,7 @@ format.get_format_text_list = function (item, ctx)
     n_lines = #text_list,
   }
   -- this is necessary because first line starts at cursor pos
-  for line_idx = 1, #text_list do
+  for line_idx = 2, #text_list do
     text_list[line_idx] = indent_string .. text_list[line_idx]
   end
   return text_list, fmt_info

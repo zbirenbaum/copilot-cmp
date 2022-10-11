@@ -15,6 +15,14 @@ local clear_after_cursor = function (completion_item)
   return completion_item
 end
 
+local fix_indent = function (completion_item)
+  local linetext = vim.fn.getline('.')
+  local text = completion_item.textEdit.newText
+  text = string.gsub(text, "^%s*", "")
+  completion_item.textEdit.newText = text
+  return completion_item
+end
+
 local autofmt = function (completion_item)
   vim.schedule(function ()
     local fmt_info = completion_item.fmt_info
@@ -71,6 +79,7 @@ source.new = function(client, opts)
 
   local setup_execution_functions = function ()
     local executions = {
+      -- fix_indent,
       -- should not be necessary due to cmp changes
       -- opts.clear_after_cursor and clear_after_cursor or nil,
       opts.force_autofmt and autofmt or nil,
