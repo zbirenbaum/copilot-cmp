@@ -3,42 +3,42 @@ local util = require("copilot.util")
 local handler = require("copilot_cmp.handlers")
 local methods = { id = 0 }
 
-local format_item = function(item, params, formatters)
-  local insert_text, fmt_info = formatters.insert_text(item, params.context)
-  local preview = formatters.preview(item.text)
-  local label_text = formatters.label(item)
-  return {
-    copilot = true, -- for comparator, only availiable in panel, not cycling
-    score = item.score or nil,
-    fmt_info = fmt_info,
-    label = label_text,
-    filterText = label_text:sub(0, label_text:len()-1),
-    kind = 1,
-    cmp = {
-      kind_hl_group = "CmpItemKindCopilot",
-      kind_text = 'Copilot',
-    },
-    textEdit = {
-      newText = insert_text,
-      range = {
-        start = item.range.start,
-        ['end'] = params.context.cursor,
-      }
-    },
-    documentation = {
-      kind = "markdown",
-      value = "```" .. vim.bo.filetype .. "\n" .. preview .. "\n```"
-    },
-    dup = 1,
-  }
-end
+local format_completions = function(completions, ctx, formatters)
+  local format_item = function(item)
+    -- local insert_text, fmt_info = formatters.insert_text(item, params.context)
+    local preview = formatters.preview(item.text)
+    local label_text = formatters.label(item)
+    local insert_text = formatters.insert_text(item, ctx)
+    return {
+      copilot = true, -- for comparator, only availiable in panel, not cycling
+      score = item.score or nil,
+      label = label_text,
+      filterText = label_text:sub(0, label_text:len()-1),
+      kind = 1,
+      cmp = {
+        kind_hl_group = "CmpItemKindCopilot",
+        kind_text = 'Copilot',
+      },
+      textEdit = {
+        newText = insert_text,
+        range = {
+          start = item.range.start,
+          ['end'] = ctx.cursor,
+        }
+      },
+      documentation = {
+        kind = "markdown",
+        value = "```" .. vim.bo.filetype .. "\n" .. preview .. "\n```"
+      },
+      dup = 1,
+    }
+  end
 
-local format_completions = function(completions, params, formatters)
   return {
     IsIncomplete = true,
-    items = vim.tbl_map(function(item)
-      return format_item(item, params, formatters)
-    end, completions)
+    items = #completions > 0 and vim.tbl_map(function(item)
+      return format_item(item)
+    end, completions) or {}
   }
 end
 
@@ -58,12 +58,12 @@ methods.getCompletionsCycling = function (self, params, callback)
     if err then return err end
     if not response or vim.tbl_isempty(response.completions) then return end
     local completions = vim.tbl_values(add_results(response.completions, params))
-    callback(format_completions(completions, params, self.formatters))
+    callback(format_completions(completions, params.context, self.formatters))
   end
 
   request("getCompletionsCycling", util.get_completion_params(), respond_callback)
   -- Callback to cmp with empty completions so it doesn't freeze
-  callback(format_completions({}, params, self.formatters))
+  callback(format_completions({}, params.context, self.formatters))
 end
 
 --[[
@@ -103,12 +103,12 @@ local create_handlers = function (id, params, callback, formatters)
     results[format.deindent(solution.text)] = solution --ensure unique
     callback({
       IsIncomplete = true,
-      items = format_item(solution, params, formatters)
+      items = format_completions(solution, params.context, formatters)
     })
   end)
 
   handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback(format_completions(vim.tbl_values(results), params, formatters))
+    callback(format_completions(vim.tbl_values(results), params.context, formatters))
     vim.schedule(function () handler.remove_all_name(id) end)
   end)
 end

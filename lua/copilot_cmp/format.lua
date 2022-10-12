@@ -17,27 +17,6 @@ local str_to_list = function (str)
 end
 
 
-format.get_format_text_list = function (item, ctx)
-  -- removes a line if and only if text at all values >= lineidx equals existing text with proper indentation
-  -- TODO: this would be much cleaner as a recursive function
-  local deindented = format.deindent(item.text)
-  local indent_string = get_indent_string(ctx)
-
-  local text_list = str_to_list(deindented)
-
-  -- do this before check_exists so that we end after existing
-  local fmt_info = {
-    startl = ctx.cursor.row,
-    endl = #text_list + ctx.cursor.row - 1,
-    n_lines = #text_list,
-  }
-  -- this is necessary because first line starts at cursor pos
-  for line_idx = 2, #text_list do
-    text_list[line_idx] = indent_string .. text_list[line_idx]
-  end
-  return text_list, fmt_info
-end
-
 local remove_suffix_match = function (suffix, end_text)
   local reverse_et = string.reverse(end_text)
   local reverse_suffix = string.reverse(suffix)
@@ -55,23 +34,22 @@ local remove_suffix_match = function (suffix, end_text)
   return modified
 end
 
-format.format_remove_existing = function (item, ctx)
+format.format_remove_existing = function (text_list, ctx)
   -- this is an additional step to try and remove trailing text that exists
-
   local get_line_text = function (line, start_col)
     return vim.api.nvim_buf_get_text(0, line, start_col or 0, line+1, -1, {})[1]
   end
 
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local suffix = ctx.cursor_after_line
-  local text_list, fmt_info = format.get_format_text_list(item, ctx)
+
   if suffix and suffix ~= '' then
     text_list[#text_list] = remove_suffix_match(suffix, text_list[#text_list])
   end
 
   -- do not do nextline checks if on the last line
   if vim.api.nvim_buf_line_count(0) <= vim.fn.line('.') then
-    return text_list, fmt_info
+    return text_list
   end
 
   local next_line = get_line_text(cursor_pos[1])
@@ -89,15 +67,8 @@ format.format_remove_existing = function (item, ctx)
   if match then
     for idx = start_match, #text_list do text_list[idx] = nil end
   end
-  return text_list, fmt_info
-end
 
-format.format_insert_text = function (item, ctx, remove_existing)
-  local format_fn = remove_existing and format.format_remove_existing or format.get_format_text_list
-  -- default to get_format_text_list
-  local text_list, fmt_info = format_fn(item, ctx)
-  local fmt_string = table.concat(text_list, '\n')
-  return fmt_string, fmt_info
+  return text_list
 end
 
 format.remove_existing = function (item, ctx)
@@ -115,6 +86,21 @@ format.deindent = function(text)
   local indent = string.match(text, '^%s*')
   if not indent then return text end
   return string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
+end
+
+format.format_insert_text = function (item, ctx, remove_existing)
+  return item.text:gsub("^%s*", "")
+  -- item.text = format.deindent(item.text)
+  -- local text_list = str_to_list(item.text)
+  -- local user_indent = get_indent_string(ctx)
+  -- -- skip first line
+  -- for i=2, #text_list do
+  --   text_list[i] = user_indent .. text_list[i]
+  -- end
+  -- if remove_existing then
+  --   text_list = format.format_remove_existing(item, ctx)
+  -- end
+  -- return table.concat(text_list, '\n')
 end
 
 return format

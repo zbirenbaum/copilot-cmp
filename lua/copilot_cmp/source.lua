@@ -8,15 +8,7 @@ source.get_trigger_characters = function()
   return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
 end
 
-local clear_after_cursor = function (completion_item)
-  local range = completion_item.textEdit.range
-  local start = range.start
-  vim.api.nvim_buf_set_text(0, start.line, start.character, start.line, vim.fn.getline('.'):len(), {})
-  return completion_item
-end
-
 local fix_indent = function (completion_item)
-  local linetext = vim.fn.getline('.')
   local text = completion_item.textEdit.newText
   text = string.gsub(text, "^%s*", "")
   completion_item.textEdit.newText = text
@@ -33,11 +25,10 @@ local autofmt = function (completion_item)
   end)
   return completion_item
 end
-
--- executes on selection before insertion
-source.execute = function (self, completion_item, callback)
+-- executes before selection
+source.resolve = function (self, completion_item, callback)
+  completion_item = fix_indent(completion_item)
   for _, fn in ipairs(self.executions) do
-    -- currently the execution functions do not edit the insertion, but they may later
     completion_item = fn(completion_item)
   end
   callback(completion_item)
@@ -61,6 +52,7 @@ end
 local defaults =  {
   method = "getCompletionsCycling",
   force_autofmt = false,
+  fix_indent = true,
   -- should not be necessary due to cmp changes
   -- clear_after_cursor = true,
   formatters = {
@@ -79,6 +71,7 @@ source.new = function(client, opts)
 
   local setup_execution_functions = function ()
     local executions = {
+      opts.fix_indent and fix_indent or nil,
       -- fix_indent,
       -- should not be necessary due to cmp changes
       -- opts.clear_after_cursor and clear_after_cursor or nil,
