@@ -32,7 +32,6 @@ These are the default options for copilot-cmp which can be configured via the se
 ```lua
 {
   method = "getCompletionsCycling",
-  force_autofmt = false,
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
@@ -58,9 +57,6 @@ require("copilot_cmp").setup {
   method = "getPanelCompletions",
 }
 ```
-
-##### force_autofmt
-this option will cause the insertions to be formatted using the vim format function (e.g.`gg=G`) after every insertion
 
 ##### clear_after_cursor
 (10-09-22): Due to changes in cmp, this option will cause the whole line to be deleted, so I have removed it until it is clear whether this behavior is a result of intended or buggy behavior. Fortunately, the issue this option was implemented to fix seems to no longer be a problem you use 'replace' for the confirmation behavior.

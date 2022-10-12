@@ -15,16 +15,6 @@ local fix_indent = function (completion_item)
   return completion_item
 end
 
-local autofmt = function (completion_item)
-  vim.schedule(function ()
-    local fmt_info = completion_item.fmt_info
-    vim.api.nvim_win_set_cursor(0, {fmt_info.startl, 0})
-    vim.cmd("silent! normal " .. tostring(fmt_info.n_lines) .. "==")
-    local endl_contents = vim.api.nvim_buf_get_lines(0, fmt_info.endl-1, fmt_info.endl+1, false)[1] or ""
-    vim.api.nvim_win_set_cursor(0, {fmt_info.endl, #endl_contents})
-  end)
-  return completion_item
-end
 -- executes before selection
 source.resolve = function (self, completion_item, callback)
   completion_item = fix_indent(completion_item)
@@ -75,7 +65,6 @@ source.new = function(client, opts)
       -- fix_indent,
       -- should not be necessary due to cmp changes
       -- opts.clear_after_cursor and clear_after_cursor or nil,
-      opts.force_autofmt and autofmt or nil,
     }
     return executions
   end
