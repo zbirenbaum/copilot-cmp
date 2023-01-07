@@ -25,6 +25,14 @@ use {
 
 If you do not have copilot.lua installed, go to https://github.com/zbirenbaum/copilot.lua and follow the instructions there before installing this one
 
+It is recommended to disable copilot.lua's suggestion and panel modules, as they can interfere with completions properly appearing in copilot-cmp. To do so, simply place the following in your copilot.lua config:
+```lua
+require("copilot").setup({
+  suggestion = { enabled = false },
+  panel = { enabled = false },
+})
+```
+
 ### Configuration
 
 ##### Default Options:
