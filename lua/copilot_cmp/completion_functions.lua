@@ -55,15 +55,16 @@ methods.getCompletionsCycling = function (self, params, callback)
   local request = self.client.rpc.request
 
   local respond_callback = function(err, response)
-    if err then return err end
+    if err then 
+      callback(format_completions({}, params.context, self.formatters))
+      return err 
+    end
     if not response or vim.tbl_isempty(response.completions) then return end
     local completions = vim.tbl_values(add_results(response.completions, params))
     callback(format_completions(completions, params.context, self.formatters))
   end
 
   request("getCompletionsCycling", util.get_completion_params(), respond_callback)
-  -- Callback to cmp with empty completions so it doesn't freeze
-  callback(format_completions({}, params.context, self.formatters))
 end
 
 --[[
