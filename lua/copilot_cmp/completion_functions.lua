@@ -59,7 +59,10 @@ methods.getCompletionsCycling = function (self, params, callback)
       callback(format_completions({}, params.context, self.formatters))
       return err 
     end
-    if not response or vim.tbl_isempty(response.completions) then return end
+    if not response or vim.tbl_isempty(response.completions) then 
+      callback(format_completions({}, params.context, self.formatters))
+      return 
+    end
     local completions = vim.tbl_values(add_results(response.completions, params))
     callback(format_completions(completions, params.context, self.formatters))
   end
