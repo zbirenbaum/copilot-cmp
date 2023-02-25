@@ -39,30 +39,11 @@ require("copilot").setup({
 These are the default options for copilot-cmp which can be configured via the setup function:
 ```lua
 {
-  method = "getCompletionsCycling",
   formatters = {
     label = require("copilot_cmp.format").format_label_text,
     insert_text = require("copilot_cmp.format").format_insert_text,
     preview = require("copilot_cmp.format").deindent,
   },
-}
-```
-
-##### method
-
-Set the `method` field to `getCompletionsCycling` if you are having issues. getPanelCompletions previously worked just as quickly, and did not limit completions in the cmp menu to 3 recommendations, but has become so slow completions do not seem to appear due to recent changes from Microsoft. getPanelCompletions also allows for the comparator provided in copilot-cmp to not just place all copilot completions on top, but also sort them by the `score` copilot assigns them, which is not provided by getCompletionsCycling. Example:
-
-```lua
--- Recommended
-require("copilot_cmp").setup {
-  method = "getCompletionsCycling",
-}
-```
-
-```lua
--- Not Currently Recommended
-require("copilot_cmp").setup {
-  method = "getPanelCompletions",
 }
 ```
 
@@ -177,7 +158,7 @@ cmp.setup({
 
 ##### Comparators
 
-Two customs comparitors for sorting cmp entries are provided: `score` and `prioritize`. The `prioritize` comparitor causes copilot entries to appearhigher in the cmp menu. The `score` comparitor only does something if getPanelCompletions is the method used in the cmp field of the copilot.lua config. It is recommended keeping priority weight at 2, or placing the `exact` comparitor above copilot so that better lsp matches are not stuck below poor copilot matches.
+One custom comparitor for sorting cmp entries is provided: `prioritize`. The `prioritize` comparitor causes copilot entries to appear higher in the cmp menu. It is recommended keeping priority weight at 2, or placing the `exact` comparitor above copilot so that better lsp matches are not stuck below poor copilot matches.
 
 Example:
 
@@ -188,7 +169,6 @@ cmp.setup {
     priority_weight = 2,
     comparators = {
       require("copilot_cmp.comparators").prioritize,
-      require("copilot_cmp.comparators").score,
 
       -- Below is the default comparitor list and order for nvim-cmp
       cmp.config.compare.offset,
