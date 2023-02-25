@@ -1,6 +1,6 @@
 local format = require("copilot_cmp.format")
 local util = require("copilot.util")
-local handler = require("copilot_cmp.handlers")
+local api = require("copilot.api")
 local methods = { id = 0 }
 
 local format_completions = function(completions, ctx, formatters)
@@ -52,8 +52,6 @@ local add_results = function (completions, params)
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
-  local request = self.client.rpc.request
-
   local respond_callback = function(err, response)
     if err then return err end
     if not response or vim.tbl_isempty(response.completions) then return end
@@ -61,7 +59,7 @@ methods.getCompletionsCycling = function (self, params, callback)
     callback(format_completions(completions, params.context, self.formatters))
   end
 
-  request("getCompletionsCycling", util.get_completion_params(), respond_callback)
+  api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
   -- Callback to cmp with empty completions so it doesn't freeze
   callback(format_completions({}, params.context, self.formatters))
 end
@@ -88,47 +86,49 @@ Here's the breakdown on how I handle it:
   7. Finally, clean up the hooks so that we don't eat up memory
 --]]
 
-local create_handlers = function (id, params, callback, formatters)
+---@param panelId string
+local create_handlers = function (panelId, params, callback, formatters)
   local results = {}
-  id = tostring(id)
-  handler.add_handler_callback("PanelSolution", id, function (solution)
-    -- this standardizes the format of the response to be the same as cycling
-    -- Cycling insertions have been empirically less buggy
-    solution.range.start = {
-      character = 0,
-      line = solution.range.start.line,
-    }
-    solution.text = solution.displayText
-    solution.displayText = solution.completionText
-    results[format.deindent(solution.text)] = solution --ensure unique
-    callback({
-      IsIncomplete = true,
-      items = format_completions(solution, params.context, formatters)
-    })
-  end)
-
-  handler.add_handler_callback("PanelSolutionsDone", id, function()
-    callback(format_completions(vim.tbl_values(results), params.context, formatters))
-    vim.schedule(function () handler.remove_all_name(id) end)
-  end)
+  api.register_panel_handlers(panelId, {
+    on_solution = function (solution)
+      -- this standardizes the format of the response to be the same as cycling
+      -- Cycling insertions have been empirically less buggy
+      solution.range.start = {
+        character = 0,
+        line = solution.range.start.line,
+      }
+      solution.text = solution.displayText
+      solution.displayText = solution.completionText
+      results[format.deindent(solution.text)] = solution --ensure unique
+      callback({
+        IsIncomplete = true,
+        items = format_completions(solution, params.context, formatters)
+      })
+    end,
+    on_solutions_done = function()
+      callback(format_completions(vim.tbl_values(results), params.context, formatters))
+      vim.schedule(function()
+        api.unregister_panel_handlers(panelId)
+      end)
+    end,
+  })
 end
 
-local req_params = function (id)
-  local req_params = util.get_completion_params()
-  req_params.panelId = tostring(id)
+local get_req_params = function (id)
+  local req_params = util.get_doc_params()
+  req_params.panelId = "copilot-cmp:" .. tostring(id)
   return req_params
 end
 
 methods.getPanelCompletions = function (self, params, callback)
-  local request = self.client.rpc.request
-  local id = methods.id
+  local req_params = get_req_params(methods.id)
   local respond_callback = function (err, _)
     methods.id = methods.id + 1
     if err then return end
-    create_handlers(id, params, callback, self.formatters)
+    create_handlers(req_params.panelId, params, callback, self.formatters)
   end
-  local sent, _ = request("getPanelCompletions", req_params(id), respond_callback)
-  if not sent then handler.remove_all_name(id) end
+  local sent, _ = api.get_panel_completions(self.client, req_params, respond_callback)
+  if not sent then api.unregister_panel_handlers(req_params.panelId) end
   callback({ IsIncomplete = true, items = {}})
 end
 
