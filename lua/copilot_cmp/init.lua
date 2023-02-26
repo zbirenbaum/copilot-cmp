@@ -1,10 +1,10 @@
 local source = require("copilot_cmp.source")
 
-local M = {}
-
 ---Registered client and source mapping.
-M.client_source_map = {}
-M.registered = false
+local M = {
+  client_source_map = {},
+  registered = false,
+}
 
 ---Setup cmp-nvim-lsp source.
 local if_nil = function(val, default)
@@ -29,7 +29,6 @@ M.update_capabilities = function(capabilities, override)
       "additionalTextEdits",
     },
   })
-
   return capabilities
 end
 
