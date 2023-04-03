@@ -54,7 +54,8 @@ local defaults =  {
 
 source.new = function(client, opts)
   opts = vim.tbl_deep_extend('force', defaults, opts or {})
-  local completion_fn = opts.method or "getCompletionsCycling"
+  -- remove option since currently only one method is available
+  -- local completion_fn = opts.method or "getCompletionsCycling"
 
   local completion_functions = require("copilot_cmp.completion_functions")
   local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
@@ -85,7 +86,7 @@ source.new = function(client, opts)
     self.formatters.preview = require("copilot_cmp.format").deindent
   end
 
-  self.complete = completion_functions.init(completion_fn)
+  self.complete = completion_functions.init('getCompletionsCycling')
 
   return self
 end
