@@ -1,11 +1,11 @@
 local source = {}
 
 function source:get_keyword_pattern()
-  return "\\w\\+.*"
+  return [[\k\+]]
 end
 
 source.get_trigger_characters = function()
-  return { "\t", "\n", ".", ":", "(", "'", '"', "[", ",", "#", "*", "@", "|", "=", "-", "{", "/", "\\", " ", "+", "?"}
+  return {'.'}
 end
 
 local fix_indent = function (completion_item)

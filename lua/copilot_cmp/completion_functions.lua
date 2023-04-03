@@ -53,15 +53,14 @@ end
 
 methods.getCompletionsCycling = function (self, params, callback)
   local respond_callback = function(err, response)
-    if err then return err end
-    if not response or vim.tbl_isempty(response.completions) then return end
+    if err or not response or vim.tbl_isempty(response.completions) then
+      return callback({ IsIncomplete = true, items = {}})
+    end
     local completions = vim.tbl_values(add_results(response.completions, params))
     callback(format_completions(completions, params.context, self.formatters))
   end
-
   api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
-  -- Callback to cmp with empty completions so it doesn't freeze
-  callback(format_completions({}, params.context, self.formatters))
+  return callback({ IsIncomplete = false, items = {}})
 end
 
 ---@param panelId string
