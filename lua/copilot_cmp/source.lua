@@ -1,7 +1,7 @@
 local source = {}
 
 function source:get_keyword_pattern()
-  return [[\k\+]]
+  return '.'
 end
 
 source.get_trigger_characters = function()
