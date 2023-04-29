@@ -30,7 +30,7 @@ source.is_available = function(self)
     return false
   end
   -- client is not attached to current buffer.
-  if not vim.lsp.buf_get_clients(vim.api.nvim_get_current_buf())[self.client.id] then
+  if not vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })[self.client.id] then
     return false
   end
   if not self.client.name == "copilot" then
@@ -43,13 +43,6 @@ local defaults =  {
   method = "getCompletionsCycling",
   force_autofmt = false,
   fix_indent = true,
-  -- should not be necessary due to cmp changes
-  -- clear_after_cursor = true,
-  formatters = {
-    label = require("copilot_cmp.format").format_label_text,
-    insert_text = require("copilot_cmp.format").format_insert_text,
-    preview = require("copilot_cmp.format").deindent,
-  },
 }
 
 source.new = function(client, opts)
@@ -74,18 +67,6 @@ source.new = function(client, opts)
 
   self.client = client
   self.request_ids = {}
-
-  self.formatters = vim.tbl_deep_extend("force", {}, opts.formatters or {})
-  if not self.formatters.label then
-    self.formatters.label = require("copilot_cmp.format").format_label_text
-  end
-  if not self.formatters.insert_text then
-    self.formatters.insert_text = require("copilot_cmp.format").format_insert_text
-  end
-  if not self.formatters.preview then
-    self.formatters.preview = require("copilot_cmp.format").deindent
-  end
-
   self.complete = completion_functions.init('getCompletionsCycling')
 
   return self

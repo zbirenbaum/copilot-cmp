@@ -15,6 +15,7 @@ end
 M.update_capabilities = function(capabilities, override)
   override = override or {}
   local completionItem = capabilities.textDocument.completion.completionItem
+  completionItem.insertReplaceSupport = true
   completionItem.snippetSupport = if_nil(override.snippetSupport, true)
   completionItem.preselectSupport = if_nil(override.preselectSupport, true)
   completionItem.insertReplaceSupport = if_nil(override.insertReplaceSupport, true)

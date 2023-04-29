@@ -1,0 +1,14 @@
+-- local types = require('cmp.types')
+-- ---@class lsp.CompletionItem
+--
+-- local Executions = {}
+--
+-- ---Executed after the item was selected.
+-- ---@param completion_item lsp.CompletionItem
+-- ---@param callback fun(completion_item: lsp.CompletionItem|nil)
+--
+-- Executions.remove_existing = function (completion_item, callback)
+--   local get_line_text = function (line, start_col)
+--     return vim.api.nvim_buf_get_text(0, line, start_col or 0, line+1, -1, {})[1]
+--   end
+-- end
