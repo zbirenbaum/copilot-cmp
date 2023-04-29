@@ -34,50 +34,6 @@ require("copilot").setup({
 ```
 
 ### Configuration
-
-##### Default Options:
-These are the default options for copilot-cmp which can be configured via the setup function:
-```lua
-{
-  formatters = {
-    label = require("copilot_cmp.format").format_label_text,
-    insert_text = require("copilot_cmp.format").format_insert_text,
-    preview = require("copilot_cmp.format").deindent,
-  },
-}
-```
-
-##### clear_after_cursor
-(10-09-22): Due to changes in cmp, this option will cause the whole line to be deleted, so I have removed it until it is clear whether this behavior is a result of intended or buggy behavior. Fortunately, the issue this option was implemented to fix seems to no longer be a problem you use 'replace' for the confirmation behavior.
-
-cmp config example:
-```lua
-cmp.setup({
-  mapping = {
-    ["<CR>"] = cmp.mapping.confirm({
-      -- this is the important line
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = false,
-    }),
-  }
-})
-
-```
-
-##### formatters
-The `label` field corresponds to the function returning the label of the entry in nvim-cmp, `insert_text` corresponds to the actual text that is inserted, and `preview` corresponds to the text shown in the documentation window when hovering the completion.
-
-There is an experimental method for attempting to remove extraneous characters such as extra ending parenthesis that appears to work fairly well. If you wish to use it, simply place the following in your setup function:
-```lua
-{
-  formatters = {
-    insert_text = require("copilot_cmp.format").remove_existing
-  },
-}
-
-
-```
-Additionally, each field can be overriden by a user function that takes (item, ctx) as parameters and should return a string representing what you wish to supply cmp. This is an advanced feature to provide maximum configurability for how the source will format the raw output from Copilot. These functions can be extremely complex, and this is feature only recommended for advanced users, so taking a look at how the default functions work inside of `format.lua` will likely be necessary if you wish to override the behavior.
 ##### Source Definition
 
 To link cmp with this source, simply go into your cmp configuration file and include `{ name = "copilot" }` under your sources

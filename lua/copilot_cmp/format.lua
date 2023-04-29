@@ -32,7 +32,7 @@ local remove_trailing_newline = function (text)
   return text:gsub("\n[^\n]*(\n?)$", "%1")
 end
 
-format.get_preview = function (item)
+format.get_label = function (item)
   return apply_formatters(item.text, {
     deindent,
     remove_trailing_newline,
@@ -48,7 +48,7 @@ format.get_insert_text = function (item)
   })
 end
 
-format.get_filter_text = function(item)
+format.get_preview = function(item)
   return deindent(item.text)
 end
 
