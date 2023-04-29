@@ -50,7 +50,8 @@ M.setup = function(opts)
     end
   end
 
-  vim.api.nvim_create_autocmd({ "InsertEnter" }, { callback = M._on_insert_enter })
+  local startEvent = opts.event or { "InsertEnter" }
+  vim.api.nvim_create_autocmd(startEvent, { callback = M._on_insert_enter })
 end
 
 return M
