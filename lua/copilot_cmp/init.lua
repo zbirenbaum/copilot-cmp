@@ -39,6 +39,7 @@ local find_buf_client = function()
 end
 
 M.setup = function(opts)
+  opts = opts or {}
   M._on_insert_enter = function()
     local cmp = require("cmp")
     local copilot = find_buf_client()
