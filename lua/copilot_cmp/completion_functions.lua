@@ -1,42 +1,30 @@
 local format = require("copilot_cmp.format")
+local pattern = require("copilot_cmp.pattern")
 local util = require("copilot.util")
 local api = require("copilot.api")
-local methods = { id = 0 }
 
-local function to_multi_line(item)
-  local function split (inputstr, sep)
-    sep = inputstr:find('\r') and '\r' or '\n'
-    if sep == nil then sep = "\n" end
-    local t={}
-    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-      table.insert(t, str)
-    end
-    return t
-  end
+local methods = {
+  id = 0,
+  fix_pairs = true,
+}
 
-  local splitText = split(item.text)
-  local offset = {
-    start = {
-      line = item.range.start.line,
-      character = item.range.start.character
-    },
-    ['end'] = {
-      line = item.range['end'].line + (#splitText - 1),
-      character = #splitText[#splitText]
-    }
-  }
-  return {
-    newText = table.concat(splitText, '\n'),
-    insert = offset,
-    replace = offset
-  }
+local function handle_suffix(item, suffix)
+  item.text = pattern.set_suffix(item.text, suffix)
+  item.displayText = pattern.set_suffix(item.displayText, suffix)
+  return item
 end
 
 local format_completions = function(completions, ctx)
+  -- use ctx for 
   local format_item = function(item)
+    if methods.fix_pairs then
+      item = handle_suffix(item, ctx.cursor_after_line)
+    end
+
     local preview = format.get_preview(item)
     local label = format.get_label(item)
-    local multi_line = to_multi_line(item)
+    local multi_line = format.to_multi_line(item)
+
     return {
       copilot = true, -- for comparator, only availiable in panel, not cycling
       score = item.score or nil,
@@ -46,7 +34,7 @@ local format_completions = function(completions, ctx)
         kind_hl_group = "CmpItemKindCopilot",
         kind_text = 'Copilot',
       },
-      sortText = item.text,
+      sortText = multi_line.newText,
       textEdit = {
         newText = multi_line.newText,
         insert = multi_line.insert,
@@ -80,9 +68,10 @@ methods.getCompletionsCycling = function (self, params, callback)
   return callback({isIncomplete = true, items = {}})
 end
 
-methods.init = function (completion_method)
+methods.init = function (completion_method, opts)
   methods.existing_matches = {}
   methods.id = 0
+  methods.fix_pairs = opts.fix_pairs
   return methods[completion_method]
 end
 

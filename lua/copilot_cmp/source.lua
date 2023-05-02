@@ -1,4 +1,6 @@
-local source = {}
+local source = {
+  executions = {},
+}
 
 function source:get_keyword_pattern()
   return '.'
@@ -31,25 +33,16 @@ source.is_available = function(self)
   return true
 end
 
-local defaults = {}
-
 source.new = function(client, opts)
-  opts = vim.tbl_deep_extend('force', defaults, opts or {})
-  -- remove option since currently only one method is available
-  -- local completion_fn = opts.method or "getCompletionsCycling"
-
   local completion_functions = require("copilot_cmp.completion_functions")
-  local self = setmetatable({ timer = vim.loop.new_timer() }, { __index = source })
 
-  local setup_execution_functions = function ()
-    local executions = opts.executions or {}
-    return executions
-  end
+  local self = setmetatable({
+    timer = vim.loop.new_timer()
+  }, { __index = source })
 
-  self.executions = setup_execution_functions()
   self.client = client
   self.request_ids = {}
-  self.complete = completion_functions.init('getCompletionsCycling')
+  self.complete = completion_functions.init('getCompletionsCycling', opts)
 
   return self
 end

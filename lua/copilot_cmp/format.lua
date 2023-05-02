@@ -28,14 +28,18 @@ local remove_leading_whitespace = function (text)
   return text:gsub("^%s*", "")
 end
 
-local remove_trailing_newline = function (text)
-  return text:gsub("\n[^\n]*(\n?)$", "%1")
+local remove_trailing = function (text)
+  return text:gsub('[ \t]+%f[\r\n%z]', '')
 end
+
+-- local remove_trailing_newline = function (text)
+--   return text:gsub("\n[^\n]*(\n?)$", "%1")
+-- end
 
 format.get_label = function (item)
   return apply_formatters(item.text, {
     deindent,
-    remove_trailing_newline,
+    remove_trailing,
     label_text
   })
 end
@@ -44,12 +48,41 @@ format.get_insert_text = function (item)
   return apply_formatters(item.displayText, {
     remove_leading_whitespace,
     deindent,
-    remove_trailing_newline,
+    remove_trailing,
   })
 end
 
 format.get_preview = function(item)
   return deindent(item.text)
+end
+
+format.to_multi_line = function (item)
+  local function split (inputstr, sep)
+    sep = inputstr:find('\r') and '\r' or '\n'
+    if sep == nil then sep = "\n" end
+    local t={}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+      table.insert(t, str)
+    end
+    return t
+  end
+
+  local splitText = split(item.text)
+  local offset = {
+    start = {
+      line = item.range.start.line,
+      character = item.range.start.character
+    },
+    ['end'] = {
+      line = item.range['end'].line + (#splitText - 1),
+      character = #splitText[#splitText]
+    }
+  }
+  return {
+    newText = table.concat(splitText, '\n'),
+    insert = offset,
+    replace = offset
+  }
 end
 
 return format
