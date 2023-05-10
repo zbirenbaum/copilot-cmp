@@ -1,36 +1,50 @@
 local format = require("copilot_cmp.format")
+local pattern = require("copilot_cmp.pattern")
 local util = require("copilot.util")
 local api = require("copilot.api")
-local methods = { id = 0 }
 
-local format_completions = function(completions, ctx, formatters)
+local methods = {
+  id = 0,
+  fix_pairs = true,
+}
+
+local function handle_suffix(item, suffix)
+  item.text = pattern.set_suffix(item.text, suffix)
+  item.displayText = pattern.set_suffix(item.displayText, suffix)
+  return item
+end
+
+local format_completions = function(completions, ctx)
+  -- use ctx for 
   local format_item = function(item)
-    -- local insert_text, fmt_info = formatters.insert_text(item, params.context)
-    local preview = formatters.preview(item.text)
-    local label_text = formatters.label(item)
-    local insert_text = formatters.insert_text(item, ctx)
+    if methods.fix_pairs then
+      item = handle_suffix(item, ctx.cursor_after_line)
+    end
+
+    local preview = format.get_preview(item)
+    local label = format.get_label(item)
+    local multi_line = format.to_multi_line(item)
+
     return {
       copilot = true, -- for comparator, only availiable in panel, not cycling
       score = item.score or nil,
-      label = label_text,
-      filterText = label_text:sub(0, label_text:len()-1),
+      label = label,
       kind = 1,
       cmp = {
         kind_hl_group = "CmpItemKindCopilot",
         kind_text = 'Copilot',
       },
+      sortText = multi_line.newText,
       textEdit = {
-        newText = insert_text,
-        range = {
-          start = item.range.start,
-          ['end'] = ctx.cursor,
-        }
+        newText = multi_line.newText,
+        insert = multi_line.insert,
+        replace = multi_line.replace,
       },
       documentation = {
         kind = "markdown",
         value = "```" .. vim.bo.filetype .. "\n" .. preview .. "\n```"
       },
-      dup = 1,
+      dup = 0,
     }
   end
 
@@ -42,76 +56,22 @@ local format_completions = function(completions, ctx, formatters)
   }
 end
 
-local add_results = function (completions, params)
-  local results = {}
-  -- normalize completion and use as key to avoid duplicates
-  for _, completion in ipairs(completions) do
-    results[format.deindent(completion.text)] = completion
-  end
-  return results
-end
-
 methods.getCompletionsCycling = function (self, params, callback)
   local respond_callback = function(err, response)
     if err or not response or vim.tbl_isempty(response.completions) then
-      return callback({ IsIncomplete = true, items = {}})
+      return callback({isIncomplete = true, items = {}})
     end
-    local completions = vim.tbl_values(add_results(response.completions, params))
-    callback(format_completions(completions, params.context, self.formatters))
+    local completions = vim.tbl_values(response.completions)
+    callback(format_completions(completions, params.context))
   end
   api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
-  return callback({ IsIncomplete = false, items = {}})
+  return callback({isIncomplete = true, items = {}})
 end
 
----@param panelId string
-local create_handlers = function (panelId, params, callback, formatters)
-  local results = {}
-  api.register_panel_handlers(panelId, {
-    on_solution = function (solution)
-      -- this standardizes the format of the response to be the same as cycling
-      -- Cycling insertions have been empirically less buggy
-      solution.range.start = {
-        character = 0,
-        line = solution.range.start.line,
-      }
-      solution.text = solution.displayText
-      solution.displayText = solution.completionText
-      results[format.deindent(solution.text)] = solution --ensure unique
-      callback({
-        IsIncomplete = true,
-        items = format_completions(solution, params.context, formatters)
-      })
-    end,
-    on_solutions_done = function()
-      callback(format_completions(vim.tbl_values(results), params.context, formatters))
-      vim.schedule(function()
-        api.unregister_panel_handlers(panelId)
-      end)
-    end,
-  })
-end
-
-local get_req_params = function (id)
-  local req_params = util.get_doc_params()
-  req_params.panelId = "copilot-cmp:" .. tostring(id)
-  return req_params
-end
-
-methods.getPanelCompletions = function (self, params, callback)
-  local req_params = get_req_params(methods.id)
-  local respond_callback = function (err, _)
-    methods.id = methods.id + 1
-    if err then return end
-    create_handlers(req_params.panelId, params, callback, self.formatters)
-  end
-  local sent, _ = api.get_panel_completions(self.client, req_params, respond_callback)
-  if not sent then api.unregister_panel_handlers(req_params.panelId) end
-  callback({ IsIncomplete = true, items = {}})
-end
-
-methods.init = function (completion_method)
+methods.init = function (completion_method, opts)
   methods.existing_matches = {}
   methods.id = 0
+  methods.fix_pairs = opts.fix_pairs
   return methods[completion_method]
 end
 

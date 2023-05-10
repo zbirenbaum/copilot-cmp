@@ -1,58 +1,50 @@
 local source = require("copilot_cmp.source")
+local capabilities = require("copilot_cmp.capabilities")
 
 ---Registered client and source mapping.
 local M = {
   client_source_map = {},
   registered = false,
+  default_capabilities = capabilities.default_capabilities,
+  update_capabilities = capabilities.update_capabilities,
 }
 
----Setup cmp-nvim-lsp source.
-local if_nil = function(val, default)
-  if val == nil then return default end
-  return val
-end
+local default_opts = {
+  event = { "InsertEnter", "LspAttach" },
+  fix_pairs = true,
+}
 
-M.update_capabilities = function(capabilities, override)
-  override = override or {}
-  local completionItem = capabilities.textDocument.completion.completionItem
-  completionItem.snippetSupport = if_nil(override.snippetSupport, true)
-  completionItem.preselectSupport = if_nil(override.preselectSupport, true)
-  completionItem.insertReplaceSupport = if_nil(override.insertReplaceSupport, true)
-  completionItem.labelDetailsSupport = if_nil(override.labelDetailsSupport, true)
-  completionItem.deprecatedSupport = if_nil(override.deprecatedSupport, true)
-  completionItem.commitCharactersSupport = if_nil(override.commitCharactersSupport, true)
-  completionItem.tagSupport = if_nil(override.tagSupport, { valueSet = { 1 } })
-  completionItem.resolveSupport = if_nil(override.resolveSupport, {
-    properties = {
-      "documentation",
-      "detail",
-      "additionalTextEdits",
-    },
-  })
-  return capabilities
-end
+M._on_insert_enter = function(opts)
 
-local find_buf_client = function()
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
-    if client.name == "copilot" then return client end
-  end
-end
-
-M.setup = function(opts)
-  opts = opts or {}
-  M._on_insert_enter = function()
-    local cmp = require("cmp")
-    local copilot = find_buf_client()
-    if copilot and not M.client_source_map[copilot.id] then
-      local s = source.new(copilot, opts)
-      if s:is_available() then
-        M.client_source_map[copilot.id] = cmp.register_source("copilot", s)
-      end
+  local find_buf_client = function()
+    for _, client in ipairs(vim.lsp.get_active_clients()) do
+      if client.name == "copilot" then return client end
     end
   end
 
-  local startEvent = opts.event or { "InsertEnter" }
-  vim.api.nvim_create_autocmd(startEvent, { callback = M._on_insert_enter })
+  local cmp = require("cmp")
+  local copilot = find_buf_client()
+  if not copilot or M.client_source_map[copilot.id] then return end
+
+  local s = source.new(copilot, opts)
+  if s:is_available() then
+    M.client_source_map[copilot.id] = cmp.register_source("copilot", s)
+  end
+
+end
+
+M.setup = function(opts)
+  opts = vim.tbl_deep_extend("force", default_opts, opts or {})
+  -- just in case someone decides to set event to nil for some reason
+  local startEvent = opts.event or { "InsertEnter", "LspAttach" }
+
+  vim.api.nvim_create_autocmd(startEvent, {
+    group = vim.api.nvim_create_augroup('copilot_cmp', { clear = true }),
+    pattern = '*',
+    callback = function ()
+      M._on_insert_enter(opts)
+    end
+  })
 end
 
 return M
