@@ -14,7 +14,7 @@ If you already have copilot.lua installed, you can install this plugin with pack
 ### Install
 
 #### Lazy
-```
+```lua
 {
   "zbirenbaum/copilot-cmp",
   config = function ()
