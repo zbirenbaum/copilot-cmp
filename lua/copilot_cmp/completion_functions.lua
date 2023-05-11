@@ -8,17 +8,24 @@ local methods = {
   fix_pairs = true,
 }
 
-local function handle_suffix(item, suffix)
-  item.text = pattern.set_suffix(item.text, suffix)
-  item.displayText = pattern.set_suffix(item.displayText, suffix)
-  return item
+local function handle_suffix(text, suffix)
+  local tbl = format.split(text)
+  tbl[1] = pattern.set_suffix(tbl[1], suffix)
+  local res = ''
+  for i, v in ipairs(tbl) do
+    res = res .. v
+    if i < #tbl then
+      res = res .. '\n'
+    end
+  end
+  return res
 end
 
 local format_completions = function(completions, ctx)
-  -- use ctx for 
   local format_item = function(item)
     if methods.fix_pairs then
-      item = handle_suffix(item, ctx.cursor_after_line)
+      item.text = handle_suffix(item.text, ctx.cursor_after_line)
+      item.displayText = handle_suffix(item.displayText, ctx.cursor_after_line)
     end
 
     local preview = format.get_preview(item)
@@ -34,9 +41,9 @@ local format_completions = function(completions, ctx)
         kind_hl_group = "CmpItemKindCopilot",
         kind_text = 'Copilot',
       },
-      sortText = multi_line.newText,
+      sortText = item.text,
       textEdit = {
-        newText = multi_line.newText,
+        newText = item.text,
         insert = multi_line.insert,
         replace = multi_line.replace,
       },

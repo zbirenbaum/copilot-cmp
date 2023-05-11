@@ -39,8 +39,6 @@ M.setup = function(opts)
   local startEvent = opts.event or { "InsertEnter", "LspAttach" }
 
   vim.api.nvim_create_autocmd(startEvent, {
-    group = vim.api.nvim_create_augroup('copilot_cmp', { clear = true }),
-    pattern = '*',
     callback = function ()
       M._on_insert_enter(opts)
     end

@@ -1,6 +1,5 @@
 local pattern = {}
 
-
 local ch_pairs = {
   ['('] = '%)',
   ['['] = '%]',

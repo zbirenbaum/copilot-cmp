@@ -56,18 +56,17 @@ format.get_preview = function(item)
   return deindent(item.text)
 end
 
-format.to_multi_line = function (item)
-  local function split (inputstr, sep)
-    sep = inputstr:find('\r') and '\r' or '\n'
-    if sep == nil then sep = "\n" end
-    local t={}
-    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-      table.insert(t, str)
-    end
-    return t
+format.split = function (inputstr, sep)
+  sep = sep or inputstr:find('\r') and '\r' or '\n'
+  if sep == nil then sep = "\n" end
+  local t={}
+  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+    table.insert(t, str)
   end
-
-  local splitText = split(item.text)
+  return t
+end
+format.to_multi_line = function (item)
+  local splitText = format.split(item.text)
   local offset = {
     start = {
       line = item.range.start.line,
