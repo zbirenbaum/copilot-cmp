@@ -2,6 +2,7 @@ local format = require("copilot_cmp.format")
 local pattern = require("copilot_cmp.pattern")
 local util = require("copilot.util")
 local api = require("copilot.api")
+-- local debounce = require ('copilot_cmp.debounce')
 
 local methods = {
   id = 0,
@@ -63,7 +64,14 @@ local format_completions = function(completions, ctx)
   }
 end
 
+local id = 0
+local existing = {}
+local delay = 100
+
 methods.getCompletionsCycling = function (self, params, callback)
+  existing[id] = nil
+  id = id+1
+
   local respond_callback = function(err, response)
     if err or not response or vim.tbl_isempty(response.completions) then
       return callback({isIncomplete = true, items = {}})
@@ -71,14 +79,32 @@ methods.getCompletionsCycling = function (self, params, callback)
     local completions = vim.tbl_values(response.completions)
     callback(format_completions(completions, params.context))
   end
-  api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
+
+
+  local cb = function ()
+    api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
+  end
+
+  local defer_callback = function ()
+    local cb_id = id
+    existing[cb_id] = cb
+    vim.defer_fn(function ()
+      if existing[cb_id] then
+        existing[cb_id]()
+      end
+    end, delay)
+  end
+
+  defer_callback()
   return callback({isIncomplete = true, items = {}})
 end
+
 
 methods.init = function (completion_method, opts)
   methods.existing_matches = {}
   methods.id = 0
   methods.fix_pairs = opts.fix_pairs
+
   return methods[completion_method]
 end
 
