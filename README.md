@@ -159,15 +159,22 @@ cmp.setup {
 ```
 
 #### copilot-cmp:
-Note: It is now **heavily** discouraged to modify the default settings unless an issue gives you good reason to do so.
+Note: It is now **heavily** discouraged to modify the default settings unless an issue gives you good reason to do so. `debounce` is the exception to this, feel free to configure it in the case that you are an extremely fast typist.
 
 The configurable options for this plugin are as follows:
 ```lua
 {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
+  debounce = 200
 }
 ```
+
+##### debounce
+The debounce parameter is a customizable debounce for copilot alone. This way, you can set up cmp to request completions from other sources on every keypress, but copilot will only have a completion requested once `debounce` milliseconds have elapsed between keypresses. Setting this to 0 should restore old functionality.
+
+This helps prevent copilot from being overloaded with requests and seems to make the provided ones more relevant.
+
 ##### event
 The event parameter configures when the source is registered. Unless you have a unique problem for your particular configuration you probably don't want to touch this.
 
@@ -178,3 +185,4 @@ Copilot might try to account for the `'` and `)` and complete it with this:
 `print('hello`
 
 This is not good behavior for consistency reasons and will just end up deleting the two ending characters. This option fixes that. Don't turn this off unless you are having problems with pairs and believe this might be causing them.
+

@@ -12,6 +12,7 @@ local M = {
 local default_opts = {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
+  debounce = 200
 }
 
 M._on_insert_enter = function(opts)

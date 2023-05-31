@@ -4,9 +4,12 @@ local util = require("copilot.util")
 local api = require("copilot.api")
 -- local debounce = require ('copilot_cmp.debounce')
 
+local existing = {}
+
 local methods = {
   id = 0,
   fix_pairs = true,
+  debounce = 200
 }
 
 local function handle_suffix(text, suffix)
@@ -64,13 +67,12 @@ local format_completions = function(completions, ctx)
   }
 end
 
-local id = 0
-local existing = {}
-local delay = 100
 
 methods.getCompletionsCycling = function (self, params, callback)
-  existing[id] = nil
-  id = id+1
+  existing[methods.id-1] = false
+  existing[methods.id] = true
+
+  local cb_id = methods.id
 
   local respond_callback = function(err, response)
     if err or not response or vim.tbl_isempty(response.completions) then
@@ -86,16 +88,18 @@ methods.getCompletionsCycling = function (self, params, callback)
   end
 
   local defer_callback = function ()
-    local cb_id = id
-    existing[cb_id] = cb
     vim.defer_fn(function ()
       if existing[cb_id] then
-        existing[cb_id]()
+        existing[cb_id] = false
+        -- reset the counter to avoid ridiculously large table
+        methods.id = 0
+        cb()
       end
-    end, delay)
+    end, methods.debounce)
   end
 
   defer_callback()
+  methods.id = methods.id + 1
   return callback({isIncomplete = true, items = {}})
 end
 
@@ -104,6 +108,7 @@ methods.init = function (completion_method, opts)
   methods.existing_matches = {}
   methods.id = 0
   methods.fix_pairs = opts.fix_pairs
+  methods.debounce = opts.debounce or methods.debounce
 
   return methods[completion_method]
 end
