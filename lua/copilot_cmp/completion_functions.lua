@@ -23,29 +23,30 @@ end
 
 local format_completions = function(completions, ctx)
   local format_item = function(item)
-    item.displayText = item.displayText or item.insertText
+    item.displayText = item.displayText or item.label
     item.text = item.text or item.label
     if methods.fix_pairs then
       item.text = handle_suffix(item.text, ctx.cursor_after_line)
       item.displayText = handle_suffix(item.displayText, ctx.cursor_after_line)
     end
 
+    local preview = format.get_preview(item)
+    local label = format.get_label(item)
     if item.range then
-      local preview = format.get_preview(item)
-      local label = format.get_label(item)
       local multi_line = format.to_multi_line(item)
     end
 
     return {
       copilot = true, -- for comparator, only availiable in panel, not cycling
       score = item.score or nil,
-      label = item.label,
+      label = label,
       kind = 1,
+      insertText = item.text,
       cmp = {
         kind_hl_group = "CmpItemKindCopilot",
         kind_text = 'Copilot',
       },
-      sortText = item.text,
+      sortText = item.insertText,
       -- textEdit = {
       --   newText = item.text,
       --   insert = multi_line.insert,
@@ -53,7 +54,7 @@ local format_completions = function(completions, ctx)
       -- },
       documentation = {
         kind = "markdown",
-        value = "```" .. vim.bo.filetype .. "\n" .. item.label .. "\n```"
+        value = "```" .. vim.bo.filetype .. "\n" .. preview .. "\n```"
       },
       dup = 0,
     }
@@ -62,17 +63,18 @@ local format_completions = function(completions, ctx)
   return {
     IsIncomplete = true,
     items = #completions > 0 and vim.tbl_map(function(item)
-      return format_item(item)
+      local i = format_item(item)
+      print(vim.inspect(i))
+      return i
     end, completions) or {}
   }
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
   local respond_callback = function(err, response)
-    print(vim.inspect(response))
-    -- if err or not response or vim.tbl_isempty(response) then
-    --   return callback({isIncomplete = true, items = {}})
-    -- end
+    if err or not response or vim.tbl_isempty(response) then
+      return callback({isIncomplete = true, items = {}})
+    end
     -- local completions = vim.tbl_values(response.completions or response)
     callback(format_completions(response, params.context))
   end
