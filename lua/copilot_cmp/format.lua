@@ -65,6 +65,7 @@ format.split = function (inputstr, sep)
   end
   return t
 end
+
 format.to_multi_line = function (item)
   local splitText = format.split(item.text)
   local offset = {

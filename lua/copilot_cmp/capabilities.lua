@@ -25,7 +25,6 @@ end
 
 M.default_capabilities = function(override)
   override = override or {}
-
   return {
     textDocument = {
       completion = {
