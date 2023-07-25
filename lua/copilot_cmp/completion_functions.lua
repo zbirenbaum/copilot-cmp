@@ -3,9 +3,6 @@ local pattern = require("copilot_cmp.pattern")
 local util = require("copilot.util")
 local api = require("copilot.api")
 
-local log = require('copilot_cmp.vlog')
-log.new({ level = "debug" }, true)
-
 local methods = {
   id = 0,
   fix_pairs = true,
@@ -67,14 +64,12 @@ local format_completions = function(completions, ctx)
 end
 
 methods.getCompletionsCycling = function (self, params, callback)
-  log.debug("getCompletionsCycling")
   local respond_callback = function(err, response)
     if err or not response or vim.tbl_isempty(response.completions) then
       return callback({isIncomplete = true, items = {}})
     end
     local completions = vim.tbl_values(response.completions)
     completion_table = format_completions(completions, params.context)
-    log.debug("completion_table: " .. vim.inspect(completion_table))
     callback(completion_table)
   end
   api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
