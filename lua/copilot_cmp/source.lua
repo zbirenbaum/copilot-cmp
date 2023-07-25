@@ -29,9 +29,14 @@ source.is_available = function(self)
   end
   -- client is not attached to current buffer.
   log.debug("source.is_available(): bufnr=" .. vim.api.nvim_get_current_buf())
-  log.debug("source.is_available(): get_active_clients=" .. vim.inspect(vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })))
   log.debug("source.is_available(): self.client.id=" .. self.client.id)
-  if not vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })[self.client.id] then
+  local active_clients = vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })
+  log.debug("source.is_available(): get_active_clients=" .. vim.inspect(active_clients))
+  local active_copilot_client = vim.tbl_filter(function(client)
+    return client.dynamic_capabilities.client_id == self.client.id
+  end, active_clients)
+  log.debug("source.is_available(): active_copilot_client=" .. vim.inspect(active_copilot_client))
+  if next(active_copilot_client) == nil then
     log.debug("source.is_available(): client is not attached to current buffer.")
     return false
   end
