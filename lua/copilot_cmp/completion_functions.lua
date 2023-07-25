@@ -69,8 +69,7 @@ methods.getCompletionsCycling = function (self, params, callback)
       return callback({isIncomplete = true, items = {}})
     end
     local completions = vim.tbl_values(response.completions)
-    completion_table = format_completions(completions, params.context)
-    callback(completion_table)
+    callback(format_completions(completions, params.context))
   end
   api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
   return callback({isIncomplete = true, items = {}})
