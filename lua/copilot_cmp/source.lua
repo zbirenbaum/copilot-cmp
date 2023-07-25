@@ -2,6 +2,9 @@ local source = {
   executions = {},
 }
 
+local log = require('copilot_cmp.vlog')
+log.new({ level = "debug" }, true)
+
 function source:get_keyword_pattern()
   return '.'
 end
@@ -21,13 +24,19 @@ end
 source.is_available = function(self)
   -- client is stopped.
   if self.client.is_stopped() then
+    log.debug("source.is_available(): client is stopped.")
     return false
   end
   -- client is not attached to current buffer.
+  log.debug("source.is_available(): bufnr=" .. vim.api.nvim_get_current_buf())
+  log.debug("source.is_available(): get_active_clients=" .. vim.inspect(vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })))
+  log.debug("source.is_available(): self.client.id=" .. self.client.id)
   if not vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })[self.client.id] then
+    log.debug("source.is_available(): client is not attached to current buffer.")
     return false
   end
   if not self.client.name == "copilot" then
+    log.debug("source.is_available(): client.name is not copilot.")
     return false
   end
   return true

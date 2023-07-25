@@ -1,6 +1,9 @@
 local source = require("copilot_cmp.source")
 local capabilities = require("copilot_cmp.capabilities")
 
+local log = require('copilot_cmp.vlog')
+log.new({ level = "debug" }, true)
+
 ---Registered client and source mapping.
 local M = {
   client_source_map = {},
@@ -15,6 +18,7 @@ local default_opts = {
 }
 
 M._on_insert_enter = function(opts)
+  log.debug("on_insert_enter")
 
   local find_buf_client = function()
     for _, client in ipairs(vim.lsp.get_active_clients()) do
@@ -27,8 +31,11 @@ M._on_insert_enter = function(opts)
   if not copilot or M.client_source_map[copilot.id] then return end
 
   local s = source.new(copilot, opts)
+  -- log.debug("source: ", s)
   if s:is_available() then
+    log.debug("source is available, registering with copilot.id: " .. copilot.id)
     M.client_source_map[copilot.id] = cmp.register_source("copilot", s)
+    -- log.debug("M.client_source_map[copilot.id]=" .. vim.inspect(M.client_source_map[copilot.id]) or "nil")
   end
 
 end
