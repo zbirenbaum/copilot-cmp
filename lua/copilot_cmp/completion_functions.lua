@@ -10,7 +10,7 @@ local methods = {
 
 local function handle_suffix(text, suffix)
   local tbl = format.split(text)
-  tbl[1] = pattern.set_suffix(tbl[1], suffix)
+  -- tbl[1] = pattern.set_suffix(tbl[1], suffix)
   local res = ''
   for i, v in ipairs(tbl) do
     res = res .. v
