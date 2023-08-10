@@ -1,0 +1,22 @@
+{
+  completions = { {
+      displayText = "ocal api = vim.api\n",
+      docVersion = 7,
+      position = {
+        character = 1,
+        line = 1
+      },
+      range = {
+        ["end"] = {
+          character = 1,
+          line = 1
+        },
+        start = {
+          character = 0,
+          line = 1
+        }
+      },
+      text = "local api = vim.api\n",
+      uuid = "e13fadf1-2200-4270-844e-ae5cd0e2d2ea"
+    } }
+}
