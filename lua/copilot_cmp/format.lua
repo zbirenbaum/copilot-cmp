@@ -71,7 +71,7 @@ format.to_multi_line = function (item)
   local offset = {
     start = {
       line = item.range.start.line,
-      character = item.range.start.character
+      character = 0,
     },
     ['end'] = {
       line = item.range['end'].line,
