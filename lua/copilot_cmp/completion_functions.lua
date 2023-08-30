@@ -23,6 +23,12 @@ end
 
 local format_completions = function(completions, ctx)
   local format_item = function(item)
+    -- get the start point after indent
+    local trim_text = item.text:gsub("^%s*", "")
+    local indent_offset = #item.text - #trim_text
+    -- set the start char to the indent offset to fix matching
+    item.range.start.character = indent_offset
+
     if methods.fix_pairs then
       item.text = handle_suffix(item.text, ctx.cursor_after_line)
       item.displayText = handle_suffix(item.displayText, ctx.cursor_after_line)
@@ -36,14 +42,15 @@ local format_completions = function(completions, ctx)
       copilot = true, -- for comparator, only availiable in panel, not cycling
       score = item.score or nil,
       label = label,
+      filterText = label,
       kind = 1,
       cmp = {
         kind_hl_group = "CmpItemKindCopilot",
         kind_text = 'Copilot',
       },
-      sortText = item.text,
       textEdit = {
-        newText = item.text,
+        -- use trim text here so it doesn't add extra indent
+        newText = trim_text,
         insert = multi_line.insert,
         replace = multi_line.replace,
       },
