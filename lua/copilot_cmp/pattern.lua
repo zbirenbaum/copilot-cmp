@@ -9,11 +9,23 @@ local ch_pairs = {
   ['}'] = '%{',
 }
 
+local fmt_char = {
+  ['('] = '%(',
+  ['['] = '%[',
+  ['{'] = '%{',
+  [')'] = '%)',
+  [']'] = '%]',
+  ['}'] = '%}',
+}
+
 local function text_has_pair(text, c)
+  if not text or not c then return false end
   return text:find(ch_pairs[c]) ~= nil
 end
 
 local function text_has_char(text, c)
+  if not text or not c then return false end
+  c = fmt_char[c] or c
   return text:find(c) ~= nil
 end
 
