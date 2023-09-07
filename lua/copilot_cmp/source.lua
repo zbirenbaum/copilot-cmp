@@ -37,6 +37,10 @@ source.is_available = function(self)
   return true
 end
 
+source.execute = function (self, completion_item, callback)
+  callback(completion_item)
+end
+
 source.new = function(client, opts)
   local completion_functions = require("copilot_cmp.completion_functions")
 
