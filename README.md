@@ -166,6 +166,9 @@ The configurable options for this plugin are as follows:
 {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
+  relative_indent = function ()
+    return vim.o.shiftwidth
+  end
 }
 ```
 ##### event
@@ -178,3 +181,6 @@ Copilot might try to account for the `'` and `)` and complete it with this:
 `print('hello`
 
 This is not good behavior for consistency reasons and will just end up deleting the two ending characters. This option fixes that. Don't turn this off unless you are having problems with pairs and believe this might be causing them.
+
+##### relative_indent
+The relative_indent function tells copilot-cmp what the correct number of spaces for a single indent level is. If copilot returns a completion using 4 spaces per indent, but you have 2 spaces per indent in your editor, the completion in your menu will correctly return two spaces.
