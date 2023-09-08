@@ -12,9 +12,7 @@ local M = {
 local default_opts = {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
-  relative_indent = function ()
-    return vim.o.shiftwidth
-  end
+  indent_char =  '\t',
 }
 
 M._on_insert_enter = function(opts)
