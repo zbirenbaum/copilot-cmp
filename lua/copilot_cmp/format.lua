@@ -45,7 +45,6 @@ end
 
 format.add_indent = function(text, user_indent, indent_level)
   if not indent_level or indent_level == 0 then return text end
-  print(user_indent, indent_level)
 
   local lines = format.split(text, '\n')
   local indent_str = string.rep(user_indent, indent_level)
