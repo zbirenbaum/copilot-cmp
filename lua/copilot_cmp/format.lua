@@ -1,6 +1,5 @@
+local pattern = require("copilot_cmp.pattern")
 local format= {}
-
-local string = require('string')
 
 local label_text = function (text)
   local shorten = function (str)
@@ -122,6 +121,51 @@ format.to_multi_line = function (item, ctx)
     text = text,
     insert = offset,
     replace = offset
+  }
+end
+
+local function handle_suffix(text, suffix)
+  local tbl = format.split(text)
+  tbl[1] = pattern.set_suffix(tbl[1], suffix)
+  local res = ''
+  for i, v in ipairs(tbl) do
+    res = res .. v
+    if i < #tbl then
+      res = res .. '\n'
+    end
+  end
+  return res
+end
+
+format.format_item = function(item, ctx, opts)
+  if opts.fix_pairs then
+    item.text = handle_suffix(item.text, ctx.cursor_after_line)
+    item.displayText = handle_suffix(item.displayText, ctx.cursor_after_line)
+  end
+
+  local multi_line = format.to_multi_line(item, ctx)
+
+  return {
+    copilot = true, -- for comparator, only availiable in panel, not cycling
+    score = item.score or nil,
+    label = multi_line.label,
+    filterText = multi_line.newText,
+    kind = 1,
+    cmp = {
+      kind_hl_group = "CmpItemKindCopilot",
+      kind_text = 'Copilot',
+    },
+    textEdit = {
+      -- use trim text here so it doesn't add extra indent
+      newText = multi_line.text,
+      insert = multi_line.insert,
+      replace = multi_line.replace,
+    },
+    documentation = {
+      kind = "markdown",
+      value = "```" .. vim.bo.filetype .. "\n" .. multi_line.preview .. "\n```"
+    },
+    dup = 0,
   }
 end
 

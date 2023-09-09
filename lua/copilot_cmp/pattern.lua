@@ -18,11 +18,13 @@ local fmt_char = {
   ['}'] = '%}',
 }
 
+-- check if text has pair for char c
 local function text_has_pair(text, c)
   if not text or not c then return false end
   return text:find(ch_pairs[c]) ~= nil
 end
 
+-- check if text has char c
 local function text_has_char(text, c)
   if not text or not c then return false end
   c = fmt_char[c] or c
@@ -36,6 +38,8 @@ local function get_text_after_cursor()
   return suffix
 end
 
+-- get text after cursor and check if it has pair for char c
+-- if present add it to text so it is there after replacement
 function pattern.set_suffix(text, line_suffix)
   for i = 1, #line_suffix do
     local c = line_suffix:sub(i,i)
