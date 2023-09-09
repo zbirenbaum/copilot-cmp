@@ -12,7 +12,6 @@ local M = {
 local default_opts = {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
-  indent_char =  '\t',
 }
 
 M._on_insert_enter = function(opts)

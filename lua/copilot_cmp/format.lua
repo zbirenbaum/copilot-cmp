@@ -75,19 +75,6 @@ format.get_indent_offset = function(text)
   return #text - #format.remove_leading_whitespace(text)
 end
 
--- format.detect_indent_char = function(text)
---   local lines = format.split(text, '\n')
---   local indent = format.get_indent_string(lines[1])
---   for _, line in ipairs(lines) do
---     local indent = format.get_indent_string(line)
---     if indent then
---       return string.sub(indent, 1, 1)
---     end
---   end
-  -- default to space if no indent detected
---   return ' '
--- end
-
 format.to_multi_line = function (item, ctx)
   -- get indent on line before cursor
   local indent_offset = format.get_indent_offset(ctx.cursor_before_line)
@@ -135,7 +122,6 @@ format.to_multi_line = function (item, ctx)
     text = text,
     insert = offset,
     replace = offset
-    -- range = range
   }
 end
 
