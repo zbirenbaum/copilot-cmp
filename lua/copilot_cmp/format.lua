@@ -6,7 +6,7 @@ local label_text = function (text)
   local shorten = function (str)
     local short_prefix = string.sub(str, 0, 20)
     local short_suffix = string.sub(str, string.len(str)-15, string.len(str))
-    local delimiter =  " ... "
+    local delimiter = " ... "
     return short_prefix .. delimiter .. short_suffix
   end
   text = text:gsub("^%s*", "")
@@ -26,29 +26,28 @@ format.get_newline_char = function (text)
 end
 
 -- deindents all lines and sets relative indent level to indent_level spaces
-format.deindent = function(text, rel_indent_level)
+format.deindent = function(text, user_indent)
   local indent = string.match(text, '^%s*')
   if not indent then return text end
 
   local deindented = string.gsub(string.gsub(string.gsub(text, '^' .. indent, ''), '\n' .. indent, '\n'), '[\r|\n]$', '')
-  local rel_indent = string.rep(' ', rel_indent_level)
 
-  if #indent == 0  or not rel_indent or rel_indent == indent then
+  if #indent == 0 or not user_indent or user_indent == indent then
     return deindented
   end
 
   local lines = format.split(deindented, '\n')
   for k, v in ipairs(lines) do
-    lines[k] = string.gsub(v, '^' .. indent, rel_indent)
+    lines[k] = string.gsub(v, '^' .. indent, user_indent)
   end
   return table.concat(lines, '\n')
 end
 
-format.add_indent = function(text, indent_level)
+format.add_indent = function(text, user_indent, indent_level)
   if not indent_level or indent_level == 0 then return text end
 
   local lines = format.split(text, '\n')
-  local indent_str = string.rep(' ', indent_level)
+  local indent_str = string.rep(user_indent, indent_level)
   for k, v in ipairs(lines) do
     lines[k] = indent_str .. v
   end
@@ -76,18 +75,49 @@ format.get_indent_offset = function(text)
   return #text - #format.remove_leading_whitespace(text)
 end
 
-format.to_multi_line = function (item, ctx, rel_indent_level)
+-- format.detect_indent_char = function(text)
+--   local lines = format.split(text, '\n')
+--   local indent = format.get_indent_string(lines[1])
+--   for _, line in ipairs(lines) do
+--     local indent = format.get_indent_string(line)
+--     if indent then
+--       return string.sub(indent, 1, 1)
+--     end
+--   end
+  -- default to space if no indent detected
+--   return ' '
+-- end
+
+format.to_multi_line = function (item, ctx)
   -- get indent on line before cursor
   local indent_offset = format.get_indent_offset(ctx.cursor_before_line)
+  local user_indent = string.match(ctx.cursor_before_line, '^%s')
 
-  -- deindent everything and set all relative indents to `indent_width_fn` spaces
-  local preview = format.deindent(item.text, rel_indent_level)
+  -- if there is no indent on line before cursor, detect via expandtab settings
+  -- have to do this to correcly force compliance with shiftwidth for multilines
+  if user_indent == nil then
+    user_indent = vim.bo.expandtab and ' ' or '\t'
+  end
+
+  -- if tabs , indent offset is the same as indent level
+  local indent_level = indent_offset
+  -- if spaces, force compliance with shiftwidth
+  if user_indent == ' ' then
+    user_indent = string.rep(' ', vim.o.shiftwidth)
+    indent_level = math.floor(indent_offset/vim.o.shiftwidth)
+  end
+
+  -- deindent everything and set all relative indents vim.o.shiftwidth spaces or one tab char
+  local preview = format.deindent(item.text, user_indent)
+  local text = preview
 
   -- add indent equal to whitespace before cursor to every line
-  local text = format.add_indent(preview, indent_offset)
+  if user_indent ~= nil then
+    text = format.add_indent(preview, user_indent, indent_level)
+  end
 
   -- get abbreviated label
-  local label =  label_text(text)
+  local label = label_text(text)
   local splitText = format.split(text)
   local offset = {
     start = {

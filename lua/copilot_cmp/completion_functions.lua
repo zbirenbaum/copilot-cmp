@@ -5,11 +5,9 @@ local api = require("copilot.api")
 -- local test = require('copilot_cmp.test_format')
 
 local methods = {
-  id = 0,
-  fix_pairs = true,
-  relative_indent = function ()
-    return vim.o.shiftwidth
-  end
+  opts = {
+    fix_pairs = true,
+  }
 }
 
 local function handle_suffix(text, suffix)
@@ -27,12 +25,12 @@ end
 
 local format_completions = function(completions, ctx)
   local format_item = function(item)
-    if methods.fix_pairs then
+    if methods.opts.fix_pairs then
       item.text = handle_suffix(item.text, ctx.cursor_after_line)
       item.displayText = handle_suffix(item.displayText, ctx.cursor_after_line)
     end
 
-    local multi_line = format.to_multi_line(item, ctx, methods.relative_indent())
+    local multi_line = format.to_multi_line(item, ctx)
 
     return {
       copilot = true, -- for comparator, only availiable in panel, not cycling
@@ -79,10 +77,7 @@ methods.getCompletionsCycling = function (self, params, callback)
 end
 
 methods.init = function (completion_method, opts)
-  methods.existing_matches = {}
-  methods.id = 0
-  methods.fix_pairs = opts.fix_pairs
-  methods.relative_indent = opts.relative_indent
+  methods.opts.fix_pairs = opts.fix_pairs
   return methods[completion_method]
 end
 
