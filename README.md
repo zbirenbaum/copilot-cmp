@@ -1,10 +1,10 @@
-# copilot-cmp
+# cmp-copilot
 
 This repository transforms https://github.com/zbirenbaum/copilot.lua into a cmp source.
 
 Copilot suggestions will automatically be loaded into your cmp menu as snippets and display their full contents when a copilot suggestion is hovered.
 
-![copilot-cmp](https://user-images.githubusercontent.com/32016110/173933674-9ad85a5a-5ad7-41cd-9fcc-f5a698cc88ae.png)
+![cmp-copilot](https://user-images.githubusercontent.com/32016110/173933674-9ad85a5a-5ad7-41cd-9fcc-f5a698cc88ae.png)
 
 
 ## Setup
@@ -16,10 +16,8 @@ If you already have copilot.lua installed, you can install this plugin with pack
 #### Lazy
 ```lua
 {
-  "zbirenbaum/copilot-cmp",
-  config = function ()
-    require("cmp_copilot").setup()
-  end
+  "JosefLitos/cmp-copilot",
+  opts = {},
 }
 
 ```
@@ -27,11 +25,11 @@ If you already have copilot.lua installed, you can install this plugin with pack
 #### Packer
 ```lua
 use {
-  "zbirenbaum/copilot-cmp",
+  "JosefLitos/cmp-copilot",
   after = { "copilot.lua" },
   config = function ()
     require("cmp_copilot").setup()
-  end
+  end,
 }
 ```
 
@@ -98,7 +96,7 @@ cmp.setup {
       max_width = 50,
       symbol_map = { Copilot = "" }
     })
-  }
+  },
   ...
 }
 ```
@@ -145,7 +143,7 @@ cmp.setup {
       cmp.config.compare.offset,
       -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
       cmp.config.compare.exact,
-      cmp.config.compare.score,
+      cmp.config.compare.score, -- or: require("cmp_copilot.comparators").score,
       cmp.config.compare.recently_used,
       cmp.config.compare.locality,
       cmp.config.compare.kind,
@@ -158,7 +156,7 @@ cmp.setup {
 }
 ```
 
-#### copilot-cmp:
+#### cmp-copilot:
 Note: It is now **heavily** discouraged to modify the default settings unless an issue gives you good reason to do so.
 
 The configurable options for this plugin are as follows:
