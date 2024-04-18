@@ -2,10 +2,6 @@ local source = {
   executions = {},
 }
 
-function source:get_keyword_pattern()
-  return '.'
-end
-
 source.get_trigger_characters = function()
   return {'.'}
 end
