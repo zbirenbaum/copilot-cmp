@@ -11,7 +11,7 @@ local methods = {
 methods.getCompletionsCycling = function(self, params, callback)
   local respond_callback = function(err, response)
     if err or not response or not response.completions then
-      return callback({ isIncomplete = false, items = {} })
+      return callback({ isIncomplete = true, items = {} })
     end
 
     local indent = params.context.cursor_before_line:find("%S") or 1
@@ -26,7 +26,7 @@ methods.getCompletionsCycling = function(self, params, callback)
     end, vim.tbl_values(response.completions))
 
     return callback({
-      isIncomplete = false,
+      isIncomplete = true,
       items = items,
     })
   end
