@@ -21,7 +21,9 @@ methods.getCompletionsCycling = function(self, params, callback)
 
       ret.textEdit.insert.start.character = ret.textEdit.insert.start.character + indent - 1
       ret.textEdit.newText = ret.textEdit.newText:sub(indent)
-      ret.textEdit.insert["end"].character = ret.textEdit.insert.start.character
+      if ret.textEdit.insert["end"].character < ret.textEdit.insert.start.character then
+        ret.textEdit.insert["end"].character = ret.textEdit.insert.start.character
+      end
       return ret
     end, vim.tbl_values(response.completions))
 
