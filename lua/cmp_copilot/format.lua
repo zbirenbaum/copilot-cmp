@@ -1,4 +1,4 @@
-local pattern = require("copilot_cmp.pattern")
+local pattern = require("cmp_copilot.pattern")
 local format = {}
 
 local label_text = function(text)

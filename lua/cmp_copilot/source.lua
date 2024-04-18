@@ -38,7 +38,7 @@ source.execute = function(self, completion_item, callback)
 end
 
 source.new = function(client, opts)
-  local completion_functions = require("copilot_cmp.completion_functions")
+  local completion_functions = require("cmp_copilot.completion_functions")
 
   local self = setmetatable({
     timer = vim.loop.new_timer(),

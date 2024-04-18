@@ -1,4 +1,4 @@
-local format = require("copilot_cmp.format")
+local format = require("cmp_copilot.format")
 local util = require("copilot.util")
 local api = require("copilot.api")
 

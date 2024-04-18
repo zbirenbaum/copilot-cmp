@@ -18,7 +18,7 @@ If you already have copilot.lua installed, you can install this plugin with pack
 {
   "zbirenbaum/copilot-cmp",
   config = function ()
-    require("copilot_cmp").setup()
+    require("cmp_copilot").setup()
   end
 }
 
@@ -30,7 +30,7 @@ use {
   "zbirenbaum/copilot-cmp",
   after = { "copilot.lua" },
   config = function ()
-    require("copilot_cmp").setup()
+    require("cmp_copilot").setup()
   end
 }
 ```
@@ -139,7 +139,7 @@ cmp.setup {
   sorting = {
     priority_weight = 2,
     comparators = {
-      require("copilot_cmp.comparators").prioritize,
+      require("cmp_copilot.comparators").prioritize,
 
       -- Below is the default comparitor list and order for nvim-cmp
       cmp.config.compare.offset,

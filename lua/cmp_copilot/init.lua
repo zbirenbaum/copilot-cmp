@@ -1,12 +1,9 @@
-local source = require("copilot_cmp.source")
-local capabilities = require("copilot_cmp.capabilities")
+local source = require("cmp_copilot.source")
 
 ---Registered client and source mapping.
 local M = {
   client_source_map = {},
   registered = false,
-  default_capabilities = capabilities.default_capabilities,
-  update_capabilities = capabilities.update_capabilities,
 }
 
 local default_opts = {
