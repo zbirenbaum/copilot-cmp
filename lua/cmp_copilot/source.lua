@@ -3,7 +3,7 @@ local source = {
 }
 
 source.get_trigger_characters = function()
-  return { "." }
+  return { ".", " ", "\t" }
 end
 
 -- executes before selection
