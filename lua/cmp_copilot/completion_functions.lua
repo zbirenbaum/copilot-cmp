@@ -21,7 +21,10 @@ methods.getCompletionsCycling = function(self, params, callback)
 
       ret.textEdit.insert.start.character = ret.textEdit.insert.start.character + indent - 1
       ret.textEdit.newText = ret.textEdit.newText:sub(indent)
-      if ret.textEdit.insert["end"].character < ret.textEdit.insert.start.character then
+      if
+        ret.textEdit.insert["end"].character < ret.textEdit.insert.start.character
+        and ret.textEdit.insert["end"].line == ret.textEdit.insert.start.line
+      then
         ret.textEdit.insert["end"].character = ret.textEdit.insert.start.character
       end
       return ret
