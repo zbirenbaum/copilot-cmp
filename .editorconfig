@@ -6,6 +6,9 @@ indent_size = 2
 max_line_length = 120
 end_of_line = lf
 
-# stylua
+[*.lua]
 quote_type = double
 call_parentheses = Always
+
+[*.md]
+max_line_length = 80
