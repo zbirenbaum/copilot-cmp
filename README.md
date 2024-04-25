@@ -18,6 +18,7 @@ If you already have copilot.lua installed, you can install this plugin with pack
 {
   "JosefLitos/cmp-copilot",
   opts = {},
+  dependencies = "copilot.lua"
 }
 
 ```

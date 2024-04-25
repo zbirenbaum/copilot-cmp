@@ -2,46 +2,47 @@ local source = require("cmp_copilot.source")
 
 ---Registered client and source mapping.
 local M = {
-  client_source_map = {},
+  default_config = {
+    event = { "InsertEnter", "LspAttach" },
+    fix_pairs = true,
+  },
   registered = false,
 }
+M.config = M.default_config
 
-local default_opts = {
-  event = { "InsertEnter", "LspAttach" },
-  fix_pairs = true,
-}
+M._on_insert_enter = function()
+  if M.registered then
+    return true -- unregister autocmd
+  end
 
-M._on_insert_enter = function(opts)
-  local find_buf_client = function()
-    for _, client in ipairs(vim.lsp.get_active_clients()) do
-      if client.name == "copilot" then
-        return client
-      end
+  local copilot
+  for _, client in ipairs(vim.lsp.get_active_clients()) do
+    if client.name == "copilot" then
+      copilot = client
+      break
     end
   end
 
-  local cmp = require("cmp")
-  local copilot = find_buf_client()
-  if not copilot or M.client_source_map[copilot.id] then
+  if not copilot then
     return
   end
 
-  local s = source.new(copilot, opts)
+  local ok, cmp = pcall(require, "cmp")
+  if not ok then
+    return
+  end
+
+  local s = source.new(copilot, M.config)
   if s:is_available() then
-    M.client_source_map[copilot.id] = cmp.register_source("copilot", s)
+    M.registered = cmp.register_source("copilot", s)
+    return true -- unregister autocmd
   end
 end
 
 M.setup = function(opts)
-  opts = vim.tbl_deep_extend("force", default_opts, opts or {})
-  -- just in case someone decides to set event to nil for some reason
-  local startEvent = opts.event or { "InsertEnter", "LspAttach" }
+  M.config = vim.tbl_deep_extend("force", M.default_config, opts or {})
 
-  vim.api.nvim_create_autocmd(startEvent, {
-    callback = function()
-      M._on_insert_enter(opts)
-    end,
-  })
+  vim.api.nvim_create_autocmd(M.config.event, { callback = M._on_insert_enter })
 end
 
 return M
