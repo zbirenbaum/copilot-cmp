@@ -3,9 +3,6 @@ local util = require("copilot.util")
 local api = require("copilot.api")
 
 local methods = {
-  opts = {
-    fix_pairs = true,
-  },
 }
 
 methods.getCompletionsCycling = function(self, params, callback)
@@ -27,11 +24,12 @@ methods.getCompletionsCycling = function(self, params, callback)
       then
         ret.textEdit.insert["end"].character = ret.textEdit.insert.start.character
       end
+      ret.textEdit.newText = ret.textEdit.newText:gsub("%s+$", "")
       return ret
     end, vim.tbl_values(response.completions))
 
     return callback({
-      isIncomplete = true,
+      isIncomplete = methods.opts.update_on_keypress,
       items = items,
     })
   end
@@ -40,7 +38,7 @@ methods.getCompletionsCycling = function(self, params, callback)
 end
 
 methods.init = function(completion_method, opts)
-  methods.opts.fix_pairs = opts.fix_pairs
+  methods.opts = vim.tbl_extend("force", methods.opts, opts or {})
   return methods[completion_method]
 end
 

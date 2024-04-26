@@ -5,6 +5,7 @@ local M = {
   default_config = {
     event = { "InsertEnter", "LspAttach" },
     fix_pairs = true,
+    update_on_keypress = true,
   },
   registered = false,
 }
