@@ -2,8 +2,7 @@ local format = require("cmp_copilot.format")
 local util = require("copilot.util")
 local api = require("copilot.api")
 
-local methods = {
-}
+local methods = { opts = {} }
 
 methods.getCompletionsCycling = function(self, params, callback)
   local respond_callback = function(err, response)
