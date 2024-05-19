@@ -1,5 +1,6 @@
 local source = require("copilot_cmp.source")
 local capabilities = require("copilot_cmp.capabilities")
+local compat = require("copilot_cmp.compat")
 
 ---Registered client and source mapping.
 local M = {
@@ -17,7 +18,7 @@ local default_opts = {
 M._on_insert_enter = function(opts)
 
   local find_buf_client = function()
-    for _, client in ipairs(vim.lsp.get_active_clients()) do
+    for _, client in ipairs(compat.get_client()) do
       if client.name == "copilot" then return client end
     end
   end
