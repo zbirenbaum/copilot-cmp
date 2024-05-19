@@ -18,7 +18,7 @@ local default_opts = {
 M._on_insert_enter = function(opts)
 
   local find_buf_client = function()
-    for _, client in ipairs(compat.get_client()) do
+    for _, client in ipairs(compat.get_clients()) do
       if client.name == "copilot" then return client end
     end
   end
