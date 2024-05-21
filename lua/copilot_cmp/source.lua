@@ -24,7 +24,7 @@ source.is_available = function(self)
     return false
   end
   -- client is not attached to current buffer.
-  local active_clients = vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })
+  local active_clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
   local active_copilot_client = vim.tbl_filter(function(client)
     return client.id == self.client.id
   end, active_clients)
