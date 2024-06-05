@@ -193,7 +193,7 @@ The configurable options for this plugin are as follows:
 {
   event = { "InsertEnter", "LspAttach" },
   fix_pairs = true,
-  update_on_keypress = true,
+  update_on_keypress = true, -- fetch for new completions on every keypress
 }
 ```
 
