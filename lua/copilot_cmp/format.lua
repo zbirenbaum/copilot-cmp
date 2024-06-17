@@ -2,14 +2,15 @@ local pattern = require("copilot_cmp.pattern")
 local format= {}
 
 local label_text = function (text)
+  local text_len = vim.fn.strchars(text)
   local shorten = function (str)
-    local short_prefix = string.sub(str, 0, 20)
-    local short_suffix = string.sub(str, string.len(str)-15, string.len(str))
+    local short_prefix = vim.fn.strcharpart(str, 0, 20)
+    local short_suffix = vim.fn.strcharpart(str, text_len - 15, text_len)
     local delimiter = " ... "
     return short_prefix .. delimiter .. short_suffix
   end
   text = text:gsub("^%s*", "")
-  return string.len(text) > 40 and shorten(text) or text
+  return text_len > 40 and shorten(text) or text
 end
 
 format.get_indent_string = function (text)
