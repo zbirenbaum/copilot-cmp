@@ -19,7 +19,7 @@ packer as you would any other with the following code:
 
 ```lua
 {
-  "JosefLitos/cmp-copilot",
+  "litoj/cmp-copilot",
   opts = {},
   dependencies = "copilot.lua"
 }
@@ -30,7 +30,7 @@ packer as you would any other with the following code:
 
 ```lua
 use {
-  "JosefLitos/cmp-copilot",
+  "litoj/cmp-copilot",
   after = { "copilot.lua" },
   config = function ()
     require("cmp_copilot").setup()
