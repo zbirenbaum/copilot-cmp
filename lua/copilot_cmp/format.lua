@@ -90,8 +90,12 @@ format.to_multi_line = function (item, ctx)
   local indent_level = indent_offset
   -- if spaces, force compliance with shiftwidth
   if user_indent == ' ' then
-    user_indent = string.rep(' ', vim.o.shiftwidth)
-    indent_level = math.floor(indent_offset/vim.o.shiftwidth)
+    local shiftwidth = vim.o.shiftwidth
+    if shiftwidth == 0 then
+      shiftwidth = vim.o.tabstop
+    end
+    user_indent = string.rep(' ', shiftwidth)
+    indent_level = math.floor(indent_offset/shiftwidth)
   end
 
   -- deindent everything and set all relative indents vim.o.shiftwidth spaces or one tab char
