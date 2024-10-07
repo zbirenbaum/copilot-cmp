@@ -8,7 +8,7 @@ local methods = {
   }
 }
 
-methods.getCompletionsCycling = function (self, params, callback)
+methods.getCompletions = function (self, params, callback)
   local respond_callback = function(err, response)
 
     if err or not response or not response.completions then
@@ -25,7 +25,7 @@ methods.getCompletionsCycling = function (self, params, callback)
     })
   end
 
-  api.get_completions_cycling(self.client, util.get_doc_params(), respond_callback)
+  api.get_completions(self.client, util.get_doc_params(), respond_callback)
   return callback({isIncomplete = true, items = {}})
 end
 
