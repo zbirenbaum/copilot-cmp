@@ -16,21 +16,25 @@ end
 
 source.is_available = function(self)
   -- client is stopped.
-  if self.client.is_stopped() then
+  if self.client.is_stopped() or not self.client.name == "copilot" then
     return false
   end
-  -- client is not attached to current buffer.
-  local active_clients = vim.lsp.get_active_clients({ bufnr = vim.api.nvim_get_current_buf() })
-  local active_copilot_client = vim.tbl_filter(function(client)
-    return client.id == self.client.id
-  end, active_clients)
-  if next(active_copilot_client) == nil then
-    return false
+
+
+  local get_source_client = function ()
+    if vim.lsp.get_clients == nil then
+      return vim.lsp.get_active_clients({
+        bufnr = vim.api.nvim_get_current_buf(),
+        id = self.client.id
+      })
+    end
+    return vim.lsp.get_clients({
+      bufnr = vim.api.nvim_get_current_buf(),
+      id = self.client.id
+    })
   end
-  if not self.client.name == "copilot" then
-    return false
-  end
-  return true
+
+  return next(get_source_client()) ~= nil
 end
 
 source.execute = function(self, completion_item, callback)
