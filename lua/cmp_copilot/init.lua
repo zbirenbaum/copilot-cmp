@@ -11,39 +11,37 @@ local M = {
 }
 M.config = M.default_config
 
-M._on_insert_enter = function()
-  if M.registered then
-    return true -- unregister autocmd
-  end
-
-  local copilot
-  for _, client in ipairs(vim.lsp.get_active_clients()) do
-    if client.name == "copilot" then
-      copilot = client
-      break
-    end
-  end
-
-  if not copilot then
-    return
-  end
-
-  local ok, cmp = pcall(require, "cmp")
-  if not ok then
-    return
-  end
-
-  local s = source.new(copilot, M.config)
-  if s:is_available() then
-    M.registered = cmp.register_source("copilot", s)
-    return true -- unregister autocmd
-  end
-end
-
 M.setup = function(opts)
   M.config = vim.tbl_deep_extend("force", M.default_config, opts or {})
 
-  vim.api.nvim_create_autocmd(M.config.event, { callback = M._on_insert_enter })
+  local function on_insert_enter()
+    local clients = vim.lsp.get_clients
+        and vim.lsp.get_clients({
+          name = "copilot",
+          bufnr = vim.api.nvim_get_current_buf(),
+        })
+      or vim.tbl_filter(function(client)
+        return client.name == "copilot"
+      end, vim.lsp.get_active_clients())
+
+    if #clients == 0 then
+      return
+    end
+
+    local ok, cmp = pcall(require, "cmp")
+    if not ok then
+      return
+    end
+
+    -- copilot launches a single instance, but it stays alive forever
+    local s = source.new(clients[1], M.config)
+    if s:is_available() then
+      M.registered = cmp.register_source("copilot", s)
+      return true -- unregister autocmd
+    end
+  end
+
+  vim.api.nvim_create_autocmd(M.config.event, { callback = on_insert_enter })
 end
 
 return M
