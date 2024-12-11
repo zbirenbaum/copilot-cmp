@@ -54,7 +54,7 @@ source.new = function(client, opts)
 
   self.client = client
   self.request_ids = {}
-  self.complete = completion_functions.init('getCompletionsCycling', opts)
+  self.complete = completion_functions.init('getCompletions', opts)
 
   return self
 end
