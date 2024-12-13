@@ -2,14 +2,14 @@
 
 This repository transforms https://github.com/zbirenbaum/copilot.lua into a cmp source.
 
-Copilot suggestions will automatically be loaded into your cmp menu as snippets and display their full contents when a copilot suggestion is hovered.
+Copilot suggestions will automatically be loaded into your cmp menu as snippets and display their full contents when a copilot suggestion hovers.
 
 ![copilot-cmp](https://user-images.githubusercontent.com/32016110/173933674-9ad85a5a-5ad7-41cd-9fcc-f5a698cc88ae.png)
 
 
 ## Setup
 
-If you already have copilot.lua installed, you can install this plugin with packer as you would any other with the following code:
+If you already have copilot.lua installed, you can install this plugin with Packer as you would any other with the following code:
 
 ### Install
 
@@ -106,12 +106,12 @@ cmp.setup {
 If you do not use lspkind, simply add the custom icon however you normally handle `kind` formatting and it will integrate as if it was any other normal lsp completion kind.
 
 ##### Tab Completion Configuration (Highly Recommended)
-Unlike other completion sources, copilot can use other lines above or below an empty line to provide a completion. This can cause problematic for individuals that select menu entries with `<TAB>`. This behavior is configurable via cmp's config and the following code will make it so that the menu still appears normally, but tab will fallback to indenting unless a non-whitespace character has actually been typed.
+Unlike other completion sources, copilot can use other lines above or below an empty line to provide completion. This can cause problems for individuals that select menu entries with `<TAB>`. This behavior is configurable via cmp's config and the following code will make it so that the menu still appears normally, but tab will fall back to indenting unless a non-whitespace character has actually been typed.
 
 ```lua
 local has_words_before = function()
   if vim.api.nvim_buf_get_option(0, "buftype") == "prompt" then return false end
-  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))  -- use table.unpack() in Lua >= 5.2
   return col ~= 0 and vim.api.nvim_buf_get_text(0, line-1, 0, line-1, col, {})[1]:match("^%s*$") == nil
 end
 cmp.setup({
@@ -129,7 +129,7 @@ cmp.setup({
 
 ##### Comparators
 
-One custom comparitor for sorting cmp entries is provided: `prioritize`. The `prioritize` comparitor causes copilot entries to appear higher in the cmp menu. It is recommended keeping priority weight at 2, or placing the `exact` comparitor above copilot so that better lsp matches are not stuck below poor copilot matches.
+One custom comparator for sorting cmp entries is provided: `prioritize`. The `prioritize` comparator causes copilot entries to appear higher in the cmp menu. It is recommended to keep priority weight at 2, or place the `exact` comparator above copilot so that better lsp matches are not stuck below poor copilot matches.
 
 Example:
 
@@ -141,7 +141,7 @@ cmp.setup {
     comparators = {
       require("copilot_cmp.comparators").prioritize,
 
-      -- Below is the default comparitor list and order for nvim-cmp
+      -- Below is the default comparator list and order for nvim-cmp
       cmp.config.compare.offset,
       -- cmp.config.compare.scopes, --this is commented in nvim-cmp too
       cmp.config.compare.exact,
@@ -177,4 +177,4 @@ Suppose you have the following code:
 Copilot might try to account for the `'` and `)` and complete it with this:
 `print('hello`
 
-This is not good behavior for consistency reasons and will just end up deleting the two ending characters. This option fixes that. Don't turn this off unless you are having problems with pairs and believe this might be causing them.
+This is not good behavior for consistency reasons and will just end up deleting the two ending characters. This option fixes that. Don't turn this off unless you have problems with pairs and believe this might be causing them.
